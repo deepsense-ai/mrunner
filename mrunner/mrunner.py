@@ -3,16 +3,12 @@ import argparse
 import os
 
 import sys
-import uuid
 
 import subprocess
 import yaml
 from datetime import datetime
 
 import errno
-
-import signal
-
 
 def parser_to_yaml(config_path):
     import imp
@@ -30,7 +26,6 @@ def create_parser():
 
     parser.add_argument('--paths_to_dump', type=str, nargs='+')
     parser.add_argument('--paths_to_dump_conf', type=str)
-
 
     parser.add_argument('--docker_img', type=str)
     parser.add_argument('--docker_bin', type=str, default='docker')
@@ -142,20 +137,28 @@ class MRunner(object):
         self.wait_for_command(command)
 
     def handle_normal_run(self, exp_dir_path):
-        env = {'EXP_DIR_PATH': exp_dir_path, 'UNDER_NEPTUNE': '0'}
+        env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
         command = self.rest_argv
-        print command
+        print('Will run command:', command)
         self.wait_for_command(command, env)
-        print exp_dir_path
+        print('exp_dir_path', exp_dir_path)
         return 0
 
     def handle_neptune_run(self, exp_dir_path):
         paths_to_dump = self.mrunner_args.paths_to_dump
         print 'kurwa neptune'
+
         main_path = self.rest_argv[0]
+        if main_path == 'python':
+            main_path = self.rest_argv[1]
+            self.rest_argv = self.rest_argv[1:]
+
         mrunner_args = self.mrunner_args
 
         config_path = None
+
+        if mrunner_args.config is None:
+            raise RuntimeError('Please supply --config!')
 
         if mrunner_args.config is not None:
             if mrunner_args.config[-2:] == 'py':
@@ -172,12 +175,14 @@ class MRunner(object):
                 raise RuntimeError()
 
         neptune_command = ['neptune', 'run', main_path, '--config', config_path, '--storage-url', mrunner_args.storage_url]
+
         if paths_to_dump is not None:
             neptune_command += ['--paths-to-dump'] + paths_to_dump
 
         command = neptune_command + ['--'] + self.rest_argv[1:]
+        print('command', command)
 
-        env = {'UNDER_NEPTUNE': '1'}
+        env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '1'}
 
         self.wait_for_command(command, env)
         print exp_dir_path
@@ -188,6 +193,9 @@ class MRunner(object):
         child_env = os.environ.copy()
         child_env.update(env_dict)
         print command
+
+        #print('env_dict', env_dict)
+        #print('env', child_env)
         try:
             proc = subprocess.Popen(' '.join(command), shell=True, env=child_env)
             proc.wait()
@@ -207,16 +215,25 @@ class MRunner(object):
 
         if self.mrunner_args.storage_url is not None:
             exp_dir_path = os.path.join(self.mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
+            print('exp_dir_path', exp_dir_path)
+        else:
+            print('Warning! no exp_dir_path set')
+            exp_dir_path = '.'
 
         if self.mrunner_args.docker_img is not None:
             return self.handle_docker_no_neptune()
 
         if self.mrunner_args.neptune:
-
             return self.handle_neptune_run(exp_dir_path)
         else:
             return self.handle_normal_run(exp_dir_path)
 
-if __name__ == '__main__':
+
+def main():
     mrunner = MRunner(sys.argv)
     sys.exit(mrunner.main())
+
+if __name__ == '__main__':
+    main()
+
+
