@@ -25,6 +25,9 @@ def create_parser():
     parser.add_argument('--exp_dir_path', type=str)
 
     parser.add_argument('--paths_to_dump', type=str, nargs='+')
+
+    parser.add_argument('--tags', default=None, type=str, nargs='+')
+
     parser.add_argument('--paths_to_dump_conf', type=str)
 
     parser.add_argument('--docker_img', type=str)
@@ -212,6 +215,9 @@ class MRunner(object):
 
         self.parser_argv()
         exp_dir_path = None
+
+        if self.mrunner_args.tags is not None:
+            raise NotImplementedError
 
         if self.mrunner_args.storage_url is not None:
             exp_dir_path = os.path.join(self.mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))

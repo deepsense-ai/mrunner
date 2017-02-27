@@ -8,6 +8,7 @@ setup(
     entry_points={
         'console_scripts': [
             'mrunner=mrunner.mrunner:main',
+            'command_gen=mrunner.command_gen:main',
         ],
     },
 )
