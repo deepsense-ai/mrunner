@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import argparse
 import os
+import random
+import string
 
 import sys
 
@@ -45,6 +47,11 @@ def mkdir_p(path):
             return path
         else:
             raise
+
+
+def id_generator(n=10):
+   return ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(n))
+
 
 class NeptuneDummyParser(argparse.ArgumentParser):
     def __init__(self):
@@ -166,7 +173,7 @@ class MRunner(object):
         if mrunner_args.config is not None:
             if mrunner_args.config[-2:] == 'py':
                 yaml_str = parser_to_yaml(mrunner_args.config)
-                path = '/tmp/config_tmp.yaml'
+                path = '/tmp/mrunner_config_{id}.yaml'.format(id=id_generator(20))
                 f = open(path, 'w')
                 print >> f, yaml_str
                 f.close()
