@@ -16,9 +16,6 @@ class MRunnerCLI(object):
         rest_argv = self.argv[divider_pos + 1:]
 
         mrunner_args = parser.parse_args(args=mrunner_argv)
-        print mrunner_args
-        print mrunner_argv
-        print rest_argv
         return mrunner_args, rest_argv
 
     def _parse_paths_to_dump(self, resource_dir_path, paths_to_dump_conf, paths_to_dump):
@@ -35,11 +32,11 @@ class MRunnerCLI(object):
             # INFO(maciek): it seems when we pass args from file the list is treated as one arg?
 
             for maybe_path_to_dump in paths_to_dump:
-                print 'maybe', maybe_path_to_dump
+                print('maybe', maybe_path_to_dump)
                 for path_to_dump in maybe_path_to_dump.split(' '):
                     if len(path_to_dump) == 0:
                         continue
-                    print 'path_to_dump', path_to_dump, len(path_to_dump)
+                    print('path_to_dump', path_to_dump, len(path_to_dump))
                     dst_rel = ''
                     src = os.path.abspath(path_to_dump)
                     dst = os.path.join(resource_dir_path, dst_rel)

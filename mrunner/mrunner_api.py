@@ -18,7 +18,7 @@ class NeptuneDummyParser(argparse.ArgumentParser):
 
 
     def add_argument(self, *args, **kwargs):
-        print args, kwargs
+        print(args, kwargs)
         if len(args) != 1:
 
             raise RuntimeError()
@@ -76,14 +76,14 @@ class MRunner(object):
             for line in f.readlines():
                 src, dst_rel = line.split(' ')
                 dst = os.path.join(resource_dir_path, dst_rel)
-                print dst_rel
-                print src, dst
+                print(dst_rel)
+                print(src, dst)
                 cmd = 'cp -r {src} {dst}'.format(src=src, dst=dst)
-                print cmd
+                print(cmd)
                 os.system(cmd)
 
         with open(os.path.join(exp_dir_path, 'cmd.txt'), 'w') as f:
-            print >> f, ' '.join(sys.argv)
+            print((' '.join(sys.argv)), file=f)
 
 
         command = '{docker_bin} run -i -t -e LOCAL_USER_ID=`id -u $USER`  -v {resource_dir_path}:/wdir/res_dir -v {exp_dir_path}:/wdir/exp_dir --workdir /wdir/res_dir {docker_img} '.format(
@@ -95,8 +95,8 @@ class MRunner(object):
         rest_cmd = ' '.join(rest_argv)
         rest_cmd = ['/bin/bash', '-c', "'{rest_cmd}'".format(rest_cmd=rest_cmd)]
         command += rest_cmd
-        print 'COMMAND'
-        print command
+        print('COMMAND')
+        print(command)
         self._wait_for_command(command)
 
     def create_normal_run_command(self, rest_argv, exp_dir_path):
@@ -110,9 +110,9 @@ class MRunner(object):
             yaml_str = self.parser_to_yaml(config_path, name, project)
             path = '/tmp/mrunner_config_{id}.yaml'.format(id=id_generator(20))
             f = open(path, 'w')
-            print >> f, yaml_str
+            print(yaml_str, file=f)
             f.close()
-            print yaml_str
+            print(yaml_str)
             new_config_path = path
         elif config_path[-4:] == 'yaml':
             new_config_path = config_path
@@ -122,10 +122,10 @@ class MRunner(object):
 
 
     def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[]):
-        print 'create_neptune', config_path
-        print paths_to_dump
-        print storage_url
-        print rest_argv
+        print('create_neptune', config_path)
+        print(paths_to_dump)
+        print(storage_url)
+        print(rest_argv)
         main_path = rest_argv[0]
         if main_path == 'python':
             main_path = rest_argv[1]
@@ -146,8 +146,9 @@ class MRunner(object):
 
 
     def run_task_local(self, task):
-        print task.command
-        print ' '.join(task.command)
+        print('task.command', task.command)
+        print(' '.join(task.command))
+        print('task.env', task.env)
         child_env = os.environ.copy()
         child_env.update(task.env)
 
@@ -155,7 +156,7 @@ class MRunner(object):
             proc = subprocess.Popen(' '.join(task.command), shell=True, env=child_env)
             proc.wait()
         except KeyboardInterrupt:
-            print 'Interrupted by user!'
+            print('Interrupted by user!')
 
 
 
