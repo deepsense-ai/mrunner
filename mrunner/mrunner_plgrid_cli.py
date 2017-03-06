@@ -33,7 +33,6 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
         parser.add_argument('--neptune_conf', type=str, default=None)
 
-        parser.add_argument('--run_type', type=str, choices=['srun', 'sbatch'])
 
         parser.add_argument('--tags', default=[], type=str, nargs='+')
 
@@ -48,6 +47,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--docker_img', type=str)
         parser.add_argument('--docker_bin', type=str, default='docker')
         parser.add_argument('--neptune', action='store_true')
+        parser.add_argument('--srun', action='store_true')
+        parser.add_argument('--sbatch', action='store_true')
         parser.add_argument('--config', type=str)
         return parser
 
@@ -57,12 +58,15 @@ class MRunnerPLGridCLI(MRunnerCLI):
         self.argv = argv
         mrunner_args, rest_argv = self.parse_argv()
 
+
         if mrunner_args.storage_url is not None:
             exp_dir_path = os.path.join(mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
             print('exp_dir_path', exp_dir_path)
         else:
             print('Warning! no exp_dir_path set')
             exp_dir_path = '.'
+        if int(mrunner_args.srun) + int(mrunner_args.sbatch) != 1:
+            raise RuntimeError('Please provide exactly one of --srun, --sbatch')
 
         resource_dir_path = os.path.join(exp_dir_path, 'src')
 
@@ -117,10 +121,10 @@ class MRunnerPLGridCLI(MRunnerCLI):
                 env['PYTHONPATH'] = mrunner_args.pythonpath
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path)
 
-        if mrunner_args.run_type == 'srun':
+        if mrunner_args.srun:
             self.prometheus_api.srun(task, partition=mrunner_args.partition,
                                      cores=mrunner_args.cores)
-        else:
+        elif mrunner_args.sbatch:
             self.prometheus_api.sbatch(task, partition=mrunner_args.partition,
                                        cores=mrunner_args.cores)
 
