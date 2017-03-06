@@ -72,7 +72,7 @@ class Prometheus(object):
         command = self._construct_command(task)
         remote_path = self._create_remote_script(command)
 
-        remote_command = 'srun -c 24 -p {partition} {gpu_gres} -c {num_cores} {script_path}'.format(partition=partition,
+        remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} {script_path}'.format(partition=partition,
                                                             gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
                                                             num_cores=cores,
                                                             script_path=remote_path
