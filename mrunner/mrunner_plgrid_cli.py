@@ -1,15 +1,15 @@
 import argparse
-
 import sys
+import os
 
 from datetime import datetime
 
+from mrunner.mrunner import id_generator
 from mrunner.mrunner_api import MRunner
-import os
 
-from mrunner_cli import MRunnerCLI
-from prometheus import Prometheus
-from tasks import PlgridTask
+from mrunner.mrunner_cli import MRunnerCLI
+from mrunner.prometheus import Prometheus
+from mrunner.tasks import PlgridTask
 
 PLGRID_USERNAME = os.environ.get('PLGRID_USERNAME', 'plghenrykm')
 MRUNNER_SCRATCH_SPACE = os.environ.get('MRUNNER_SCRATCH_SPACE', '/net/scratch/people/plghenrykm/maciek/mrunner')
@@ -60,7 +60,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
 
         if mrunner_args.storage_url is not None:
-            exp_dir_path = os.path.join(mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
+            # INFO(maciek): random noise added is for purpose!
+            exp_dir_path = os.path.join(mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '_' + id_generator(4))
             print('exp_dir_path', exp_dir_path)
         else:
             print('Warning! no exp_dir_path set')
