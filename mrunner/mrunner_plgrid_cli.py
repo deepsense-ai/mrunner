@@ -4,12 +4,12 @@ import os
 
 from datetime import datetime
 
-from mrunner.mrunner import id_generator
 from mrunner.mrunner_api import MRunner
 
 from mrunner.mrunner_cli import MRunnerCLI
 from mrunner.prometheus import Prometheus
 from mrunner.tasks import PlgridTask
+from mrunner.utils import id_generator
 
 PLGRID_USERNAME = os.environ.get('PLGRID_USERNAME', 'plghenrykm')
 MRUNNER_SCRATCH_SPACE = os.environ.get('MRUNNER_SCRATCH_SPACE', '/net/scratch/people/plghenrykm/maciek/mrunner')
