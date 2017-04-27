@@ -8,7 +8,7 @@ def mrunner_main(job_main, create_parser_fun):
         from deepsense import neptune
         ctx = neptune.Context()
         args = ctx.params
-        exp_dir_path = ctx.dump_dir_url
+        exp_dir_path = ctx.storage_url
     else:
         parser = create_parser_fun()
         args = parser.parse_args()

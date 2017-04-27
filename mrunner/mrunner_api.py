@@ -132,19 +132,19 @@ class MRunner(object):
             main_path = rest_argv[1]
             rest_argv = rest_argv[1:]
 
-        neptune_command = ['neptune', 'run', main_path, '--config', config_path, '--storage-url', storage_url]
+        neptune_command = ['neptune', 'run', main_path, '--config', config_path, '--storage', storage_url]
         if tags:
             neptune_command += ['--tags'] + tags
 
         if paths_to_dump is not None:
-            neptune_command += ['--paths-to-dump'] + paths_to_dump
+            neptune_command += ['--paths-to-copy'] + paths_to_dump
 
         command = neptune_command + ['--'] + rest_argv[1:]
 
         env = {
-               'MRUNNER_UNDER_NEPTUNE': '1'}
+               'MRUNNER_UNDER_NEPTUNE': '1'
+        }
         return LocalTask(command=command, env=env)
-
 
     def run_task_local(self, task):
         print('task.command', task.command)
