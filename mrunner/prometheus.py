@@ -49,6 +49,8 @@ class Prometheus(object):
 
         command += 'module load test/pro-viz/1.0\n'
         command += 'module load plgrid/tools/ffmpeg/3.0\n'
+        command += 'module load plgrid/tools/python/2.7.13\n'
+
 
         for name, val in task.env.iteritems():
             command += 'export {name}={val}\n'.format(name=name, val=val)
