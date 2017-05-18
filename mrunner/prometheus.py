@@ -44,13 +44,12 @@ class Prometheus(object):
         if task.cwd is not None:
             command += 'cd {cwd}\n'.format(cwd=task.cwd)
 
-        if task.venv_path is not None:
-            command += 'source {venv_path}/bin/activate\n'.format(venv_path=task.venv_path)
-
         command += 'module load test/pro-viz/1.0\n'
         command += 'module load plgrid/tools/ffmpeg/3.0\n'
         command += 'module load plgrid/tools/python/2.7.13\n'
 
+        if task.venv_path is not None:
+            command += 'source {venv_path}/bin/activate\n'.format(venv_path=task.venv_path)
 
         for name, val in task.env.iteritems():
             command += 'export {name}={val}\n'.format(name=name, val=val)
