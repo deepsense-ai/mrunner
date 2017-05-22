@@ -45,6 +45,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--venv_path', type=str, default='/net/people/plghenrykm/maciek/venvs/tpack')
 
         parser.add_argument('--docker_img', type=str)
+
+        parser.add_argument('--time', type=str, default='24:00:00')
         parser.add_argument('--docker_bin', type=str, default='docker')
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--srun', action='store_true')
@@ -127,7 +129,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
                                      cores=mrunner_args.cores)
         elif mrunner_args.sbatch:
             self.prometheus_api.sbatch(task, partition=mrunner_args.partition,
-                                       cores=mrunner_args.cores)
+                                       cores=mrunner_args.cores,
+                                       time=mrunner_args.time)
 
 
 
