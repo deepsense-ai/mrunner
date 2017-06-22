@@ -122,7 +122,7 @@ class MRunner(object):
         return new_config_path
 
 
-    def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[]):
+    def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[], neptune_conf_path=None):
         print('create_neptune', config_path)
         print(paths_to_dump)
         print(storage_url)
@@ -139,7 +139,13 @@ class MRunner(object):
         if paths_to_dump is not None:
             neptune_command += ['--paths-to-copy'] + paths_to_dump
 
+
         command = neptune_command + ['--'] + rest_argv[1:]
+
+        if neptune_conf_path is not None:
+            with open(neptune_conf_path) as f:
+                for line in f.readlines():
+                    command = [line] + command
 
         env = {
                'MRUNNER_UNDER_NEPTUNE': '1'

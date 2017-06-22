@@ -56,6 +56,7 @@ class MRunnerLocalCLI(MRunnerCLI):
 
         parser.add_argument('--paths_to_dump', type=str, nargs='+')
         parser.add_argument('--pythonpath', type=str)
+        parser.add_argument('--neptune_conf_path', type=str, default=None)
 
         parser.add_argument('--tags', default=[], type=str, nargs='+')
 
@@ -106,6 +107,7 @@ class MRunnerLocalCLI(MRunnerCLI):
             local_task = self.mrunner_api.create_neptune_run_command(config_path=new_local_config_path,
                                                                      paths_to_dump=mrunner_args.paths_to_dump,
                                                                      storage_url=mrunner_args.storage_url,
+                                                                     neptune_conf_path=mrunner_args.neptune_conf_path,
                                                                      tags=mrunner_args.tags,
                                                                      rest_argv=rest_argv)
             if mrunner_args.pythonpath:
