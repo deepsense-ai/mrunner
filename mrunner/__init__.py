@@ -1,1 +1,1 @@
-from mrunner_user import mrunner_main
+from mrunner.mrunner_user import mrunner_main
