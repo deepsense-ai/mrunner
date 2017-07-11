@@ -6,7 +6,7 @@ import os
 
 from datetime import datetime
 
-from mrunner_api import MRunner
+from mrunner.mrunner_api import MRunner
 
 class MRunnerCLI(object):
     def parse_argv(self):
