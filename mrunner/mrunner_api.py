@@ -8,8 +8,8 @@ from datetime import datetime
 
 import yaml
 
+from mrunner.tasks import LocalTask
 from mrunner.utils import mkdir_p, id_generator
-from tasks import LocalTask
 
 
 class NeptuneDummyParser(argparse.ArgumentParser):
