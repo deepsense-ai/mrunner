@@ -8,6 +8,7 @@ setup(
         'console_scripts': [
             'mrunner=mrunner.mrunner_cli:main',
             'mrunner_plgrid=mrunner.mrunner_plgrid_cli:main',
+            'mrunner_kube=mrunner.mrunner_kube_cli:main',
             'command_gen=mrunner.command_gen:main',
         ],
     },

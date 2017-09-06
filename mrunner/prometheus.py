@@ -11,7 +11,7 @@ from fabric.state import env
 from mrunner.utils import id_generator
 
 
-class Prometheus(object):
+class PrometheusBackend(object):
     def __init__(self, username, host, scratch_space):
         self.host = host
         self.username = username
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     username = 'plghenrykm'
     host = 'pro.cyfronet.pl'
 
-    prometheus = Prometheus(username=username, host=host)
+    prometheus = PrometheusBackend(username=username, host=host)
     #prometheus.sbatch('uptime', time='01:00:00', partition='plgrid-testing')
 
     command = 'echo test ; sleep 1; echo test2; sleep 1'

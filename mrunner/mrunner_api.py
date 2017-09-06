@@ -8,7 +8,7 @@ from datetime import datetime
 
 import yaml
 
-from mrunner.tasks import LocalTask
+from mrunner.tasks import CommandWithEnv
 from mrunner.utils import mkdir_p, id_generator
 
 
@@ -54,7 +54,7 @@ class NeptuneDummyParser(argparse.ArgumentParser):
         return yaml.dump(res)
 
 
-class MRunner(object):
+class MRunnerHelper(object):
     def parser_to_yaml(self, config_path, name, project):
         import imp
         config_module = imp.load_source('create_parser', config_path)
@@ -103,7 +103,7 @@ class MRunner(object):
     def create_normal_run_command(self, rest_argv, exp_dir_path):
         env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
         command = rest_argv
-        return LocalTask(command=command, env=env)
+        return CommandWithEnv(command=command, env=env)
 
     def config_to_yaml(self, config_path, name, project):
         assert config_path is not None
@@ -122,7 +122,8 @@ class MRunner(object):
         return new_config_path
 
 
-    def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[], neptune_conf_path=None):
+    def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[], neptune_conf_path=None, docker_image=None,
+                                   neptune_host=None, neptune_port=None, neptune_username=None, neptune_password=None):
         print('create_neptune', config_path)
         print(paths_to_dump)
         print(storage_url)
@@ -132,14 +133,34 @@ class MRunner(object):
             main_path = rest_argv[1]
             rest_argv = rest_argv[1:]
 
-        neptune_command = ['neptune', 'run', main_path, '--config', config_path, '--storage', storage_url]
+        base_argv = ['neptune', 'run', main_path, '--config', config_path, '--storage', storage_url]
         if tags:
-            neptune_command += ['--tags'] + tags
+            tags_argv = ['--tags'] + tags
+        else:
+            tags_argv = []
 
         if paths_to_dump is not None:
-            neptune_command += ['--paths-to-copy'] + paths_to_dump
+            print('will be using docker')
+            paths_to_dump_argv = ['--paths-to-copy'] + paths_to_dump
+        else:
+            paths_to_dump_argv = []
 
+        if docker_image is not None:
+            docker_image_argv = ['--docker-image', docker_image]
+        else:
+            docker_image_argv = []
 
+        if neptune_conf_path is None:
+            assert neptune_host is not None
+            assert neptune_port is not None
+            assert neptune_username is not None
+            assert neptune_password is not None
+            neptune_credentials_argv = ['--host', neptune_host, '--port', neptune_port, '--username',
+                                        neptune_username, '--password', neptune_password]
+        else:
+            neptune_credentials_argv = []
+
+        neptune_command = base_argv + tags_argv + paths_to_dump_argv + docker_image_argv + neptune_credentials_argv
         command = neptune_command + ['--'] + rest_argv[1:]
 
         if neptune_conf_path is not None:
@@ -147,10 +168,11 @@ class MRunner(object):
                 for line in f.readlines():
                     command = [line] + command
 
+
         env = {
                'MRUNNER_UNDER_NEPTUNE': '1'
         }
-        return LocalTask(command=command, env=env)
+        return CommandWithEnv(command=command, env=env)
 
     def run_task_local(self, task):
         print('task.command', task.command)

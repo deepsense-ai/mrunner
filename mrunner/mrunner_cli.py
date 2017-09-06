@@ -6,7 +6,7 @@ import os
 
 from datetime import datetime
 
-from mrunner.mrunner_api import MRunner
+from mrunner.mrunner_api import MRunnerHelper
 
 class MRunnerCLI(object):
     def parse_argv(self):
@@ -37,7 +37,7 @@ class MRunnerCLI(object):
                     if len(path_to_dump) == 0:
                         continue
                     print('path_to_dump', path_to_dump, len(path_to_dump))
-                    dst_rel = ''
+                    dst_rel = path_to_dump
                     src = os.path.abspath(path_to_dump)
                     dst = os.path.join(resource_dir_path, dst_rel)
                     res_paths_to_dump.append({'src': src, 'dst': dst, 'dst_rel': dst_rel})
@@ -65,7 +65,13 @@ class MRunnerLocalCLI(MRunnerCLI):
         parser.add_argument('--name', type=str, default='test')
         parser.add_argument('--project', type=str, default='test')
 
-        parser.add_argument('--docker_img', type=str)
+        parser.add_argument('--neptune_host', type=str)
+        parser.add_argument('--neptune_port', type=str)
+        parser.add_argument('--neptune_username', type=str)
+        parser.add_argument('--neptune_password', type=str)
+
+
+        parser.add_argument('--docker_image', type=str)
         parser.add_argument('--docker_bin', type=str, default='docker')
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--config', type=str)
@@ -80,9 +86,6 @@ class MRunnerLocalCLI(MRunnerCLI):
         self.argv = argv
         mrunner_args, rest_argv = self.parse_argv()
 
-        if mrunner_args.docker_img is not None:
-            raise NotImplementedError
-            #return self.mrunner_api.handle_docker_no_neptune(mrunner_args, rest_argv)
 
         if mrunner_args.storage_url is not None:
             exp_dir_path = os.path.join(mrunner_args.storage_url, datetime.now().strftime('%Y_%m_%d_%H_%M_%S'))
@@ -104,17 +107,27 @@ class MRunnerLocalCLI(MRunnerCLI):
             new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
                                                                     mrunner_args.name,
                                                                     mrunner_args.project)
+
             local_task = self.mrunner_api.create_neptune_run_command(config_path=new_local_config_path,
                                                                      paths_to_dump=mrunner_args.paths_to_dump,
                                                                      storage_url=mrunner_args.storage_url,
                                                                      neptune_conf_path=mrunner_args.neptune_conf_path,
                                                                      tags=mrunner_args.tags,
-                                                                     rest_argv=rest_argv)
+                                                                     neptune_host=mrunner_args.neptune_host,
+                neptune_port=mrunner_args.neptune_port,
+                neptune_username=mrunner_args.neptune_username,
+                neptune_password=mrunner_args.neptune_password,
+                                                                     rest_argv=rest_argv,
+                                                                     docker_image=mrunner_args.docker_image)
             if mrunner_args.pythonpath:
                 local_task.env['PYTHONPATH'] = mrunner_args.pythonpath
 
             self.mrunner_api.run_task_local(local_task)
         else:
+            if mrunner_args.docker_image is not None:
+                raise NotImplementedError
+                #return self.mrunner_api.handle_docker_no_neptune(mrunner_args, rest_argv)
+
             local_task = self.mrunner_api.create_normal_run_command(rest_argv, exp_dir_path=exp_dir_path)
 
             if mrunner_args.pythonpath:
@@ -123,7 +136,7 @@ class MRunnerLocalCLI(MRunnerCLI):
 
 
 def main():
-    mrunner_api = MRunner()
+    mrunner_api = MRunnerHelper()
     mrunner_cli = MRunnerLocalCLI(mrunner_api)
     sys.exit(mrunner_cli.main(sys.argv))
 

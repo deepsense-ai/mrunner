@@ -4,10 +4,10 @@ import os
 
 from datetime import datetime
 
-from mrunner.mrunner_api import MRunner
+from mrunner.mrunner_api import MRunnerHelper
 
 from mrunner.mrunner_cli import MRunnerCLI
-from mrunner.prometheus import Prometheus
+from mrunner.prometheus import PrometheusBackend
 from mrunner.tasks import PlgridTask
 from mrunner.utils import id_generator
 
@@ -27,31 +27,24 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--storage_url', type=str)
         parser.add_argument('--exp_dir_path', type=str)
 
+        parser.add_argument('--partition', type=str, default='plgrid-testing')
         parser.add_argument('--paths_to_dump', type=str, nargs='+')
         parser.add_argument('--pythonpath', type=str)
-        parser.add_argument('--partition', type=str, default='plgrid-testing')
-
         parser.add_argument('--neptune_conf', type=str, default=None)
-
-
         parser.add_argument('--tags', default=[], type=str, nargs='+')
-
         parser.add_argument('--paths_to_dump_conf', type=str)
-        parser.add_argument('--cores', type=int, default=24)
-
         parser.add_argument('--name', type=str, default='test')
         parser.add_argument('--project', type=str, default='test')
+        parser.add_argument('--config', type=str)
 
         parser.add_argument('--venv_path', type=str, default='/net/people/plghenrykm/maciek/venvs/tpack')
-
+        parser.add_argument('--cores', type=int, default=24)
         parser.add_argument('--docker_img', type=str)
-
         parser.add_argument('--time', type=str, default='24:00:00')
         parser.add_argument('--docker_bin', type=str, default='docker')
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--srun', action='store_true')
         parser.add_argument('--sbatch', action='store_true')
-        parser.add_argument('--config', type=str)
         return parser
 
 
@@ -135,8 +128,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
 
 def main():
-    prometheus = Prometheus(username=PLGRID_USERNAME, host=HOST, scratch_space=MRUNNER_SCRATCH_SPACE)
-    mrunner_api = MRunner()
+    prometheus = PrometheusBackend(username=PLGRID_USERNAME, host=HOST, scratch_space=MRUNNER_SCRATCH_SPACE)
+    mrunner_api = MRunnerHelper()
     mrunner_cli = MRunnerPLGridCLI(mrunner_api, prometheus)
     sys.exit(mrunner_cli.main(sys.argv))
 

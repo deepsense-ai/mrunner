@@ -1,7 +1,11 @@
-class LocalTask(object):
+class CommandWithEnv(object):
     def __init__(self, command, env):
         self.command = command
         self.env = env
+
+    def generate_one_liner(self):
+        raise NotImplementedError
+
 
 
 class PlgridTask(object):
