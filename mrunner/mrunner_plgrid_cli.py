@@ -13,8 +13,7 @@ from mrunner.utils import id_generator
 
 PLGRID_USERNAME = os.environ.get('PLGRID_USERNAME', 'plghenrykm')
 MRUNNER_SCRATCH_SPACE = os.environ.get('MRUNNER_SCRATCH_SPACE', '/net/scratch/people/plghenrykm/maciek/mrunner')
-
-HOST = 'pro.cyfronet.pl'
+PLGRID_HOST = os.environ.get('PLGRID_HOST', 'pro.cyfronet.pl')
 
 class MRunnerPLGridCLI(MRunnerCLI):
     def __init__(self, mrunner_api, prometheus_api):
@@ -132,7 +131,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
 
 def main():
-    prometheus = PrometheusBackend(username=PLGRID_USERNAME, host=HOST, scratch_space=MRUNNER_SCRATCH_SPACE)
+    prometheus = PrometheusBackend(username=PLGRID_USERNAME, host=PLGRID_HOST, scratch_space=MRUNNER_SCRATCH_SPACE)
     mrunner_api = MRunnerHelper()
     mrunner_cli = MRunnerPLGridCLI(mrunner_api, prometheus)
     sys.exit(mrunner_cli.main(sys.argv))
