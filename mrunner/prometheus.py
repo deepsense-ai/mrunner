@@ -34,7 +34,7 @@ class PrometheusBackend(object):
             print >> f, '#!/bin/bash'
             print >> f, command
 
-        remote_path = osp.join('mrunner/batch_scripts/', script_name)
+        remote_path = osp.join(self.scratch_space, script_name)
         put(script_path, remote_path)
         self._chmod_x(remote_path)
         return remote_path
