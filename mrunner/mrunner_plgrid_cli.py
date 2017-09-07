@@ -37,11 +37,11 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--project', type=str, default='test')
         parser.add_argument('--config', type=str)
 
-        parser.add_argument('--venv_path', type=str, default='/net/people/plghenrykm/maciek/venvs/tpack')
+        # TODO(maciek): hack for anaconda
+        parser.add_argument('--after_module_load_cmd', type=str)
+        parser.add_argument('--venv_path', type=str)
         parser.add_argument('--cores', type=int, default=24)
-        parser.add_argument('--docker_img', type=str)
         parser.add_argument('--time', type=str, default='24:00:00')
-        parser.add_argument('--docker_bin', type=str, default='docker')
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--srun', action='store_true')
         parser.add_argument('--sbatch', action='store_true')
@@ -69,7 +69,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
         paths_to_dump = self._parse_paths_to_dump(resource_dir_path,
                                                   mrunner_args.paths_to_dump_conf,
                                                   mrunner_args.paths_to_dump)
-        print paths_to_dump
+        print(paths_to_dump)
         if mrunner_args.neptune:
             if mrunner_args.config is None:
                 raise RuntimeError('Please supply --config!')
@@ -83,27 +83,31 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
             self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
 
-            paths_to_dump_for_neptune = [os.path.join(p['dst'], os.path.basename(p['src']))  for p in paths_to_dump]
-            print paths_to_dump_for_neptune
+            paths_to_dump_for_neptune = [os.path.join(p['dst'], os.path.basename(p['src'])) for p in paths_to_dump]
+            print(paths_to_dump_for_neptune)
             local_task = self.mrunner_api.create_neptune_run_command(config_path=remote_config_path,
                                                                      paths_to_dump=paths_to_dump_for_neptune,
                                                                      storage_url=mrunner_args.storage_url,
                                                                      tags=mrunner_args.tags,
+                                                                     neptune_conf_path=mrunner_args.neptune_conf,
                                                                      rest_argv=rest_argv)
             command_list = local_task.command
+
             if mrunner_args.neptune_conf is not None:
                 with open(mrunner_args.neptune_conf) as f:
                     for line in f.readlines():
                         command_list = [line] + command_list
 
             command = ' '.join(command_list)
-            print command
+            print(command)
 
             env = local_task.env
 
             if mrunner_args.pythonpath:
                 env['PYTHONPATH'] = mrunner_args.pythonpath
-            task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path)
+
+            task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
+                              after_module_load_cmd=mrunner_args.after_module_load_cmd)
 
         else:
             self.prometheus_api.mkdir(resource_dir_path)

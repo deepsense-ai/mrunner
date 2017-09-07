@@ -37,9 +37,11 @@ class MRunnerCLI(object):
                     if len(path_to_dump) == 0:
                         continue
                     print('path_to_dump', path_to_dump, len(path_to_dump))
-                    dst_rel = path_to_dump
+                    #dst_rel = path_to_dump
+                    dst_rel = '.'
                     src = os.path.abspath(path_to_dump)
                     dst = os.path.join(resource_dir_path, dst_rel)
+                    # TODO(maciek): I do not understand the semantics here, src, dst, dst_rel???
                     res_paths_to_dump.append({'src': src, 'dst': dst, 'dst_rel': dst_rel})
 
         return res_paths_to_dump

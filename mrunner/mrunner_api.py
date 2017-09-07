@@ -124,10 +124,10 @@ class MRunnerHelper(object):
 
     def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[], neptune_conf_path=None, docker_image=None,
                                    neptune_host=None, neptune_port=None, neptune_username=None, neptune_password=None):
-        print('create_neptune', config_path)
-        print(paths_to_dump)
-        print(storage_url)
-        print(rest_argv)
+        print('create_neptune {}'.format(config_path))
+        print('paths_to_dump {}'.format(paths_to_dump))
+        print('storage_url {}'.format(storage_url))
+        print('rest_argv {}'.format(rest_argv))
         main_path = rest_argv[0]
         if main_path == 'python':
             main_path = rest_argv[1]
@@ -140,12 +140,12 @@ class MRunnerHelper(object):
             tags_argv = []
 
         if paths_to_dump is not None:
-            print('will be using docker')
             paths_to_dump_argv = ['--paths-to-copy'] + paths_to_dump
         else:
             paths_to_dump_argv = []
 
         if docker_image is not None:
+            print('Will be using docker')
             docker_image_argv = ['--docker-image', docker_image]
         else:
             docker_image_argv = []

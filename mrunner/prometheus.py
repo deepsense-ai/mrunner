@@ -39,25 +39,8 @@ class PrometheusBackend(object):
         self._chmod_x(remote_path)
         return remote_path
 
-    def _construct_command(self, task):
-        command = ''
-        if task.cwd is not None:
-            command += 'cd {cwd}\n'.format(cwd=task.cwd)
-
-        command += 'module load test/pro-viz/1.0\n'
-        command += 'module load plgrid/tools/ffmpeg/3.0\n'
-        command += 'module load plgrid/tools/python/2.7.13\n'
-
-        if task.venv_path is not None:
-            command += 'source {venv_path}/bin/activate\n'.format(venv_path=task.venv_path)
-
-        for name, val in task.env.iteritems():
-            command += 'export {name}={val}\n'.format(name=name, val=val)
-        command += task.command
-        return command
-
     def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null'):
-        command = self._construct_command(task)
+        command = task.construct_command()
         remote_path = self._create_remote_script(command)
         remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} -c {num_cores} -o {stdout_path} {script_path}'.format(partition=partition,
                                                                   time=time,
@@ -66,11 +49,11 @@ class PrometheusBackend(object):
                                                                   gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
                                                                   script_path=remote_path
                                                                 )
-        print 'remote_command=', remote_command
+        print('remote_command=', remote_command)
         run(remote_command)
 
     def srun(self, task, partition='plgrid', cores=24):
-        command = self._construct_command(task)
+        command = task.construct_command()
         remote_path = self._create_remote_script(command)
 
         remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} {script_path}'.format(partition=partition,
@@ -78,7 +61,7 @@ class PrometheusBackend(object):
                                                             num_cores=cores,
                                                             script_path=remote_path
                                                             )
-        print 'remote_command=', remote_command
+        print('remote_command=', remote_command)
         run(remote_command)
 
     def mkdir(self, path):
@@ -91,22 +74,27 @@ class PrometheusBackend(object):
             #put(local_path, remote_path)
 
     def copy_paths_rel(self, paths_to_dump, dst_dir):
+        # TODO(maciek): describe the semantics of this!!!
+        print('copy_paths_rel')
+        for d in paths_to_dump:
+            print(d)
         tar_filename = '{id}.tar.gz'.format(id=id_generator(20))
         tar_tmp_path = os.path.join('/tmp/', tar_filename)
-        print 'tmp_path', tar_tmp_path
+        print('tmp_path', tar_tmp_path)
         tar = tarfile.open(tar_tmp_path, 'w:gz')
 
         for d in paths_to_dump:
             remote_rel_path, local_path = d['dst_rel'], d['src']
-            if remote_rel_path != '':
-                raise NotImplementedError
-            print 'adding_path', local_path
+            # if remote_rel_path != '':
+            #     raise NotImplementedError
+            print('adding_path', local_path)
             tar.add(local_path, arcname=os.path.basename(local_path))
         tar.close()
 
-        print 'dst_dir', dst_dir
+        print('dst_dir', dst_dir)
         self.copy_path(dst_dir, tar_tmp_path)
         with cd(dst_dir):
+            run('pwd')
             run('ls *')
             run('tar xfz {tar_filename}'.format(tar_filename=tar_filename))
 
@@ -114,20 +102,20 @@ class PrometheusBackend(object):
         raise NotImplementedError
         tar_filename = '{id}.tar.gz'.format(id=id_generator(20))
         tar_path = os.path.join('/tmp/', tar_filename)
-        print 'tmp_path', tar_path
+        print('tmp_path', tar_path)
         tar = tarfile.open(tar_path, 'w:gz')
 
         for d in paths_to_dump:
             remote_rel_path, local_path = d['dst_rel'], d['src']
             if remote_rel_path != '':
                 raise NotImplementedError
-            print 'adding_path', local_path
+            print('adding_path', local_path)
             tar.add(local_path, arcname=os.path.basename(local_path))
         tar.close()
         sha_digest = self._sha256_file(tar_path)
-        print sha_digest
+        print(sha_digest)
 
-        print 'dst_dir', dst_dir
+        print('dst_dir', dst_dir)
 
         # WARNING(maciek): this is not concurrent safe
 
@@ -148,7 +136,6 @@ class PrometheusBackend(object):
 
     def copy_path(self, remote_path, local_path):
         rsync_project(remote_path, local_path)
-
 
 
 
