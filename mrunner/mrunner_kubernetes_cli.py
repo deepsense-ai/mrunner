@@ -100,8 +100,8 @@ class MRunnerKuberntesCLI(MRunnerCLI):
         # TODO(maciek): temporary!!!
         volume_mounts = [
             KubeVolumeMount(name='storage',
-                            mountPath='/mnt/mhome',
-                            hostPath={'path': '/mnt/mhome'}
+                            mountPath='/mnt/ml-team/rl/kubernetes_storage',
+                            hostPath={'path': '/mnt/ml-team/rl/kubernetes_storage'}
                             )
         ]
 
@@ -154,7 +154,8 @@ class MRunnerKuberntesCLI(MRunnerCLI):
         if isfile(src_path):
             shutil.copy(src=src_path, dst=dst_path)
         else:
-            shutil.copytree(src_path, dst_path)
+            os.system('cp -r {src} {dst}'.format(src=src_path, dst=dst_path))
+            # shutil.copytree(src_path, dst_path)
 
 
 KUBE_CONFIG_PATH = '~/.kube/config'

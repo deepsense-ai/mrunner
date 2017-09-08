@@ -35,7 +35,10 @@ spec:
       mountPath: /usr/lib/x86_64-linux-gnu/libcuda.so.1
     - name: libcuda-so-384
       mountPath: /usr/lib/x86_64-linux-gnu/libcuda.so.384.59
-
+  
+  imagePullSecrets:
+    - name: regsecret
+    
   restartPolicy: Never
   volumes:
   - name: nvidia-driver-384
@@ -158,7 +161,8 @@ class KubernetesBackend(object):
             yaml_str = yaml.dump(pod_dict)
 
             with open('/tmp/final_yaml.yaml', 'w') as f:
-                print(yaml_str, file=f)
+                # print(yaml_str, file=f)
+                f.write(yaml_str)
 
             pprint.pprint(pod_dict)
             self.create_pod(yaml_str)
@@ -174,14 +178,16 @@ class KubernetesBackend(object):
     def create_pod(self, yaml_str):
         random_path = '/tmp/{}.yaml'.format(id_generator(10))
         with open(random_path, 'w') as f:
-            print(yaml_str, file=f)
+            # print(yaml_str, file=f)
+            f.write(yaml_str)
 
         command = ['kubectl', 'create']
         if self.kube_config is not None:
             command += ['--kubeconfig', self.kube_config]
         command += ['-f', random_path]
         print(' '.join(command))
-        subprocess.run(command, check=True)
+        # subprocess.run(command, check=True)
+        subprocess.call(command)
 
 
 
