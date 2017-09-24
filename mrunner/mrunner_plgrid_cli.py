@@ -12,7 +12,7 @@ from mrunner.tasks import PlgridTask
 from mrunner.utils import id_generator
 
 PLGRID_USERNAME = os.environ.get('PLGRID_USERNAME', 'plghenrykm')
-MRUNNER_SCRATCH_SPACE = os.environ.get('MRUNNER_SCRATCH_SPACE', '/net/scratch/people/plghenrykm/maciek/mrunner')
+MRUNNER_SCRATCH_SPACE = os.environ.get('MRUNNER_SCRATCH_SPACE', '/net/scratch/people/plghenrykm/pmilos/mrunner')
 PLGRID_HOST = os.environ.get('PLGRID_HOST', 'pro.cyfronet.pl')
 
 class MRunnerPLGridCLI(MRunnerCLI):
@@ -35,11 +35,14 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--name', type=str, default='test')
         parser.add_argument('--project', type=str, default='test')
         parser.add_argument('--config', type=str)
+        parser.add_argument('--experiment_id', type=str, default="")
+        parser.add_argument('--with_yaml', action='store_true')
 
         # TODO(maciek): hack for anaconda
         parser.add_argument('--after_module_load_cmd', type=str)
         parser.add_argument('--venv_path', type=str)
         parser.add_argument('--cores', type=int, default=24)
+        parser.add_argument('--ntasks', type=int, default=24)
         parser.add_argument('--time', type=str, default='24:00:00')
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--srun', action='store_true')
@@ -49,6 +52,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
 
     def main(self, argv):
+
         self.argv = argv
         mrunner_args, rest_argv = self.parse_argv()
 
@@ -69,16 +73,18 @@ class MRunnerPLGridCLI(MRunnerCLI):
                                                   mrunner_args.paths_to_dump_conf,
                                                   mrunner_args.paths_to_dump)
         print(paths_to_dump)
+
+        remote_config_path = os.path.join(resource_dir_path, 'config.yaml')
+
         if mrunner_args.neptune:
             if mrunner_args.config is None:
                 raise RuntimeError('Please supply --config!')
             self.prometheus_api.mkdir(resource_dir_path)
             self.prometheus_api.copy_paths_rel(paths_to_dump, resource_dir_path)
-
             new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
                                                                     mrunner_args.name,
                                                                     mrunner_args.project)
-            remote_config_path = os.path.join(resource_dir_path, 'config.yaml')
+
 
             self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
 
@@ -101,32 +107,56 @@ class MRunnerPLGridCLI(MRunnerCLI):
             print(command)
 
             env = local_task.env
+            env['EXPERIMENT_ID'] = mrunner_args.experiment_id
+            env['STORAGE_URL'] = mrunner_args.storage_url
+            env['RESOURCE_DIR_PATH'] = resource_dir_path
 
             if mrunner_args.pythonpath:
                 env['PYTHONPATH'] = mrunner_args.pythonpath
 
+            log_path = '/dev/null'
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
                               after_module_load_cmd=mrunner_args.after_module_load_cmd)
 
         else:
             self.prometheus_api.mkdir(resource_dir_path)
             self.prometheus_api.copy_paths_rel(paths_to_dump, resource_dir_path)
+            parms_argv = rest_argv
+            if mrunner_args.with_yaml:
+                parms_argv.append(" --yaml {}".format(remote_config_path))
+                new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
+                                                                        mrunner_args.name,
+                                                                        mrunner_args.project)
+
+                self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
+
+            print("XXXXXXXXXXXXXX:{}".format(parms_argv))
+
 
             local_task = self.mrunner_api.create_normal_run_command(rest_argv, exp_dir_path=exp_dir_path)
             command = ' '.join(local_task.command)
             env = local_task.env
+            env['EXPERIMENT_ID'] = mrunner_args.experiment_id
+            env['STORAGE_URL'] = mrunner_args.storage_url
+            env['RESOURCE_DIR_PATH'] = resource_dir_path
 
             if mrunner_args.pythonpath:
-                env['PYTHONPATH'] = mrunner_args.pythonpath
-            task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path)
+                env['PYTHONPATH'] = "$PYTHONPATH:{}".format(mrunner_args.pythonpath)
+
+            log_path = os.path.join(resource_dir_path, "job_logs.txt")
+            task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
+                              after_module_load_cmd=mrunner_args.after_module_load_cmd, )
+
 
         if mrunner_args.srun:
             self.prometheus_api.srun(task, partition=mrunner_args.partition,
-                                     cores=mrunner_args.cores)
+                                     cores=mrunner_args.cores, ntasks=mrunner_args.ntasks)
         elif mrunner_args.sbatch:
             self.prometheus_api.sbatch(task, partition=mrunner_args.partition,
                                        cores=mrunner_args.cores,
-                                       time=mrunner_args.time)
+                                       time=mrunner_args.time,
+                                       stdout_path = log_path,
+                                       ntasks=mrunner_args.ntasks)
 
 
 

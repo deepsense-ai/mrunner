@@ -24,9 +24,12 @@ class PlgridTask(object):
         if self.cwd is not None:
             command += 'cd {cwd}\n'.format(cwd=self.cwd)
 
-        command += 'module load test/pro-viz/1.0\n'
-        command += 'module load plgrid/tools/ffmpeg/3.0\n'
-        command += 'module load plgrid/tools/python/2.7.13\n'
+        command += 'module load plgrid/tools/python/3.6.0\n'
+        command += 'module load plgrid/tools/openmpi/1.6.5-gcc-4.9.2\n'
+        command += 'module load plgrid/tools/pro-viz/1.1\n'
+        command += 'module load tools/ffmpeg/3.2.2\n'
+
+
 
         if self.after_module_load_cmd is not None:
             command += self.after_module_load_cmd + '\n'

@@ -39,27 +39,29 @@ class PrometheusBackend(object):
         self._chmod_x(remote_path)
         return remote_path
 
-    def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null'):
+    def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null', ntasks=1):
         command = task.construct_command()
         remote_path = self._create_remote_script(command)
-        remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} -c {num_cores} -o {stdout_path} {script_path}'.format(partition=partition,
+        remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} -c {num_cores} -n {ntasks} -o {stdout_path} {script_path}'.format(partition=partition,
                                                                   time=time,
                                                                   num_cores=cores,
                                                                   stdout_path=stdout_path,
                                                                   gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
-                                                                  script_path=remote_path
+                                                                  script_path=remote_path,
+                                                                  ntasks=ntasks
                                                                 )
         print('remote_command=', remote_command)
         run(remote_command)
 
-    def srun(self, task, partition='plgrid', cores=24):
+    def srun(self, task, partition='plgrid', cores=24, ntasks=1):
         command = task.construct_command()
         remote_path = self._create_remote_script(command)
 
-        remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} {script_path}'.format(partition=partition,
+        remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} -n {ntasks} {script_path}'.format(partition=partition,
                                                             gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
                                                             num_cores=cores,
-                                                            script_path=remote_path
+                                                            script_path=remote_path,
+                                                            ntasks=ntasks
                                                             )
         print('remote_command=', remote_command)
         run(remote_command)
