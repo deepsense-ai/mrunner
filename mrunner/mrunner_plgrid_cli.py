@@ -141,7 +141,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
             env['RESOURCE_DIR_PATH'] = resource_dir_path
 
             if mrunner_args.pythonpath:
-                env['PYTHONPATH'] = "$PYTHONPATH:{}".format(mrunner_args.pythonpath)
+                env['PYTHONPATH'] = "{}:$PYTHONPATH".format(mrunner_args.pythonpath)
 
             log_path = os.path.join(resource_dir_path, "job_logs.txt")
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,

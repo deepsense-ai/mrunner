@@ -25,9 +25,10 @@ class PlgridTask(object):
             command += 'cd {cwd}\n'.format(cwd=self.cwd)
 
         command += 'module load plgrid/tools/python/3.6.0\n'
-        command += 'module load plgrid/tools/openmpi/1.6.5-gcc-4.9.2\n'
         command += 'module load plgrid/tools/pro-viz/1.1\n'
         command += 'module load tools/ffmpeg/3.2.2\n'
+        command += 'module load plgrid/tools/openmpi/1.6.5-gcc-4.9.2\n'
+        command += 'module load plgrid/tools/imagemagick/6.9.1\n'
 
 
 
