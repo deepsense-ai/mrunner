@@ -47,6 +47,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--neptune', action='store_true')
         parser.add_argument('--srun', action='store_true')
         parser.add_argument('--sbatch', action='store_true')
+        parser.add_argument('--script_name', type=str, default="mrunner")
         return parser
 
 
@@ -116,7 +117,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
             log_path = '/dev/null'
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
-                              after_module_load_cmd=mrunner_args.after_module_load_cmd)
+                              after_module_load_cmd=mrunner_args.after_module_load_cmd,
+                              script_name=mrunner_args.script_name)
 
         else:
             self.prometheus_api.mkdir(resource_dir_path)
@@ -130,7 +132,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
                 self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
 
-            print("XXXXXXXXXXXXXX:{}".format(parms_argv))
+            # print("XXXXXXXXXXXXXX:{}".format(parms_argv))
 
 
             local_task = self.mrunner_api.create_normal_run_command(rest_argv, exp_dir_path=exp_dir_path)
@@ -144,8 +146,11 @@ class MRunnerPLGridCLI(MRunnerCLI):
                 env['PYTHONPATH'] = "{}:$PYTHONPATH".format(mrunner_args.pythonpath)
 
             log_path = os.path.join(resource_dir_path, "job_logs.txt")
+            script_name = mrunner_args.script_name
+
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
-                              after_module_load_cmd=mrunner_args.after_module_load_cmd, )
+                              after_module_load_cmd=mrunner_args.after_module_load_cmd,
+                              script_name=mrunner_args.script_name)
 
 
         if mrunner_args.srun:

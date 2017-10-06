@@ -20,14 +20,14 @@ class PrometheusBackend(object):
         env['host_string'] = self.host_string
         self.mkdir(self.scratch_space)
 
-    def _make_script_name(self):
-        return 'mrunner_batch_' + id_generator(20) + '.sh'
+    def _make_script_name(self, script_name):
+        return script_name + '_' + id_generator(20) + '.sh'
 
     def _chmod_x(self, path):
         run('chmod +x {path}'.format(path=path))
 
-    def _create_remote_script(self, command):
-        script_name = self._make_script_name()
+    def _create_remote_script(self, command, script_name):
+        script_name = self._make_script_name(script_name)
         script_path = osp.join('/tmp/', script_name)
 
         with open(script_path, 'w') as f:
@@ -41,7 +41,8 @@ class PrometheusBackend(object):
 
     def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null', ntasks=1):
         command = task.construct_command()
-        remote_path = self._create_remote_script(command)
+        script_name = task.script_name
+        remote_path = self._create_remote_script(command, script_name)
         remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} -c {num_cores} -n {ntasks} -o {stdout_path} {script_path}'.format(partition=partition,
                                                                   time=time,
                                                                   num_cores=cores,
@@ -55,7 +56,8 @@ class PrometheusBackend(object):
 
     def srun(self, task, partition='plgrid', cores=24, ntasks=1):
         command = task.construct_command()
-        remote_path = self._create_remote_script(command)
+        script_name = task.script_name
+        remote_path = self._create_remote_script(command, script_name)
 
         remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} -n {ntasks} {script_path}'.format(partition=partition,
                                                             gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),

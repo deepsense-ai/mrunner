@@ -10,7 +10,7 @@ class CommandWithEnv(object):
 
 class PlgridTask(object):
     def __init__(self, command, cwd=None, env={}, modules_to_load=[], venv_path=None,
-                 after_module_load_cmd=None):
+                 after_module_load_cmd=None, script_name="mrunner"):
         # paths_to_dump (dst_remote_path, local_path)
         self.command = command
         self.cwd = cwd
@@ -18,6 +18,7 @@ class PlgridTask(object):
         self.venv_path = venv_path
         self.modules_to_load = modules_to_load
         self.after_module_load_cmd = after_module_load_cmd
+        self.script_name = script_name
 
     def construct_command(self):
         command = ''
