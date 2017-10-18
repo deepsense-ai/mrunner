@@ -37,8 +37,6 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--config', type=str)
         parser.add_argument('--experiment_id', type=str, default="")
         parser.add_argument('--with_yaml', action='store_true')
-
-        # TODO(maciek): hack for anaconda
         parser.add_argument('--after_module_load_cmd', type=str)
         parser.add_argument('--venv_path', type=str)
         parser.add_argument('--cores', type=int, default=24)
@@ -48,6 +46,7 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--srun', action='store_true')
         parser.add_argument('--sbatch', action='store_true')
         parser.add_argument('--script_name', type=str, default="mrunner")
+        parser.add_argument('--modules_to_load', type=str)
         return parser
 
 
@@ -116,9 +115,16 @@ class MRunnerPLGridCLI(MRunnerCLI):
                 env['PYTHONPATH'] = mrunner_args.pythonpath
 
             log_path = '/dev/null'
+            modules_to_load = []
+            if mrunner_args.modules_to_load:
+                modules_to_load = mrunner_args.modules_to_load.split(":")
+                modules_to_load = mrunner_args.modules_to_load.split(":")
+                modules_to_load = [x for x in modules_to_load if x]  # remove empty strings
+                print("Modules to load:{}".format(modules_to_load))
+
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
                               after_module_load_cmd=mrunner_args.after_module_load_cmd,
-                              script_name=mrunner_args.script_name)
+                              script_name=mrunner_args.script_name, modules_to_load=modules_to_load)
 
         else:
             self.prometheus_api.mkdir(resource_dir_path)
@@ -146,11 +152,15 @@ class MRunnerPLGridCLI(MRunnerCLI):
                 env['PYTHONPATH'] = "{}:$PYTHONPATH".format(mrunner_args.pythonpath)
 
             log_path = os.path.join(resource_dir_path, "job_logs.txt")
-            script_name = mrunner_args.script_name
+            modules_to_load = []
+            if mrunner_args.modules_to_load:
+                modules_to_load = mrunner_args.modules_to_load.split(":")
+                modules_to_load = [x for x in modules_to_load if x]  #remove empty strings
+                print("Modules to load:{}".format(modules_to_load))
 
             task = PlgridTask(command=command, cwd=resource_dir_path, env=env, venv_path=mrunner_args.venv_path,
                               after_module_load_cmd=mrunner_args.after_module_load_cmd,
-                              script_name=mrunner_args.script_name)
+                              script_name=mrunner_args.script_name, modules_to_load=modules_to_load)
 
 
         if mrunner_args.srun:

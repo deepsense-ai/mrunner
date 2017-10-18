@@ -25,16 +25,20 @@ class PlgridTask(object):
         if self.cwd is not None:
             command += 'cd {cwd}\n'.format(cwd=self.cwd)
 
-        command += 'module load plgrid/tools/python/3.6.0\n'
-        command += 'module load plgrid/tools/pro-viz/1.1\n'
-        command += 'module load tools/ffmpeg/3.2.2\n'
-        command += 'module load plgrid/tools/openmpi/1.6.5-gcc-4.9.2\n'
-        command += 'module load plgrid/tools/imagemagick/6.9.1\n'
+        for module in self.modules_to_load:
+            command += 'module load {}\n'.format(module)
 
-
+        # command += 'module load openmpi/1.10.2-1_gcc463\n'
+        # command += 'module load plgrid/tools/python/3.6.0\n'
+        # command += 'module load plgrid/tools/pro-viz/1.1\n'
+        # command += 'module load tools/ffmpeg/3.2.2\n'
+        # command += 'module load plgrid/tools/openmpi/1.6.5-gcc-4.9.2\n'
+        # command += 'module load plgrid/tools/imagemagick/6.9.1\n'
 
         if self.after_module_load_cmd is not None:
             command += self.after_module_load_cmd + '\n'
+
+        # command += "pip install scipy\n"
 
         if self.venv_path is not None:
             command += 'source {venv_path}/bin/activate\n'.format(venv_path=self.venv_path)
