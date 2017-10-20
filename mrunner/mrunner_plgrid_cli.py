@@ -104,6 +104,9 @@ class MRunnerPLGridCLI(MRunnerCLI):
                         command_list = [line] + command_list
 
             command = ' '.join(command_list)
+            import random
+            sleep_command = "sleep {0:.4f}".format(random.random() * 5)
+            command = sleep_command + " ; " + command
             print(command)
 
             env = local_task.env
