@@ -121,7 +121,6 @@ class MRunnerPLGridCLI(MRunnerCLI):
             modules_to_load = []
             if mrunner_args.modules_to_load:
                 modules_to_load = mrunner_args.modules_to_load.split(":")
-                modules_to_load = mrunner_args.modules_to_load.split(":")
                 modules_to_load = [x for x in modules_to_load if x]  # remove empty strings
                 print("Modules to load:{}".format(modules_to_load))
 
@@ -129,23 +128,40 @@ class MRunnerPLGridCLI(MRunnerCLI):
                               after_module_load_cmd=mrunner_args.after_module_load_cmd,
                               script_name=mrunner_args.script_name, modules_to_load=modules_to_load)
 
-        else:
+        if mrunner_args.with_yaml:
             self.prometheus_api.mkdir(resource_dir_path)
             self.prometheus_api.copy_paths_rel(paths_to_dump, resource_dir_path)
-            parms_argv = rest_argv
-            if mrunner_args.with_yaml:
-                parms_argv.append(" --yaml {}".format(remote_config_path))
-                new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
-                                                                        mrunner_args.name,
-                                                                        mrunner_args.project)
+            paths_to_dump_for_neptune = [os.path.join(p['dst'], os.path.basename(p['src'])) for p in paths_to_dump]
+            new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
+                                                                    mrunner_args.name,
+                                                                    mrunner_args.project)
+            self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
+            local_task = self.mrunner_api.create_yaml_run_command(config_path=remote_config_path,
+                                                                     paths_to_dump=paths_to_dump_for_neptune,
+                                                                     storage_url=mrunner_args.storage_url,
+                                                                     tags=mrunner_args.tags,
+                                                                     exp_dir_path=exp_dir_path,
+                                                                     rest_argv=rest_argv)
 
-                self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
+            # parms_argv = rest_argv
+            # if mrunner_args.with_yaml:
+            #     parms_argv.append(" --yaml {}".format(remote_config_path))
+            #     new_local_config_path = self.mrunner_api.config_to_yaml(mrunner_args.config,
+            #                                                             mrunner_args.name,
+            #                                                             mrunner_args.project)
+            #
+            #     self.prometheus_api.copy_path(remote_config_path, new_local_config_path)
+            #
+            # local_task = self.mrunner_api.create_normal_run_command(rest_argv, exp_dir_path=exp_dir_path)
 
-            # print("XXXXXXXXXXXXXX:{}".format(parms_argv))
+            command_list = local_task.command
+            if mrunner_args.neptune_conf is not None:
+                with open(mrunner_args.neptune_conf) as f:
+                    for line in f.readlines():
+                        command_list = [line] + command_list
 
 
-            local_task = self.mrunner_api.create_normal_run_command(rest_argv, exp_dir_path=exp_dir_path)
-            command = ' '.join(local_task.command)
+            command = ' '.join(command_list)
             env = local_task.env
             env['EXPERIMENT_ID'] = mrunner_args.experiment_id
             env['STORAGE_URL'] = mrunner_args.storage_url

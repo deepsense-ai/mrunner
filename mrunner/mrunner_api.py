@@ -100,11 +100,6 @@ class MRunnerHelper(object):
         print(command)
         self._wait_for_command(command)
 
-    def create_normal_run_command(self, rest_argv, exp_dir_path):
-        env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
-        command = rest_argv
-        return CommandWithEnv(command=command, env=env)
-
     def config_to_yaml(self, config_path, name, project):
         assert config_path is not None
         if config_path[-2:] == 'py':
@@ -120,6 +115,34 @@ class MRunnerHelper(object):
         else:
             raise RuntimeError()
         return new_config_path
+
+    def create_normal_run_command(self, rest_argv, exp_dir_path):
+        env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
+        command = rest_argv
+        return CommandWithEnv(command=command, env=env)
+
+    def create_yaml_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags, exp_dir_path):
+        env = {'MRUNNER_EXP_DIR_PATH': exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
+        # main_path = rest_argv[0]
+        base_argv = rest_argv+['--config', config_path, '--storage', storage_url]
+        if tags:
+            tags_argv = ['--tags'] + tags
+        else:
+            tags_argv = []
+
+        if paths_to_dump is not None:
+            paths_to_dump_argv = ['--paths-to-copy'] + paths_to_dump
+        else:
+            paths_to_dump_argv = []
+
+        neptune_command = base_argv + tags_argv + paths_to_dump_argv
+        command = neptune_command + ['--']
+
+        print("PM: command:{}".format(command))
+
+        return CommandWithEnv(command=command, env=env)
+
+
 
 
     def create_neptune_run_command(self, config_path, paths_to_dump, storage_url, rest_argv, tags=[], neptune_conf_path=None, docker_image=None,
