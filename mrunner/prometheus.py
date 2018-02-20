@@ -54,13 +54,14 @@ class PrometheusBackend(object):
         print('remote_command=', remote_command)
         run(remote_command)
 
-    def srun(self, task, partition='plgrid', cores=24, ntasks=1):
+    def srun(self, task, partition='plgrid', cores=24, ntasks=1, gres=None, account=None):
         command = task.construct_command()
         script_name = task.script_name
         remote_path = self._create_remote_script(command, script_name)
 
-        remote_command = 'srun -p {partition} {gpu_gres} -c {num_cores} -n {ntasks} {script_path}'.format(partition=partition,
-                                                            gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
+        remote_command = 'srun -p {partition} {gpu_gres} {account} -c {num_cores} -n {ntasks} {script_path}'.format(partition=partition,
+                                                            gpu_gres=('--gres={}'.format(gres) if gres else ''),
+                                                            account=('-A {}'.format(account) if gres else ''),
                                                             num_cores=cores,
                                                             script_path=remote_path,
                                                             ntasks=ntasks

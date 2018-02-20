@@ -47,6 +47,8 @@ class MRunnerPLGridCLI(MRunnerCLI):
         parser.add_argument('--sbatch', action='store_true')
         parser.add_argument('--script_name', type=str, default="mrunner")
         parser.add_argument('--modules_to_load', type=str)
+        parser.add_argument('--A', type=str, default=None)
+        parser.add_argument('--gres', type=str, default=None)
         return parser
 
 
@@ -184,7 +186,9 @@ class MRunnerPLGridCLI(MRunnerCLI):
 
         if mrunner_args.srun:
             self.prometheus_api.srun(task, partition=mrunner_args.partition,
-                                     cores=mrunner_args.cores, ntasks=mrunner_args.ntasks)
+                                     cores=mrunner_args.cores, ntasks=mrunner_args.ntasks,
+                                     account=mrunner_args.A,
+                                     gres=mrunner_args.gres)
         elif mrunner_args.sbatch:
             self.prometheus_api.sbatch(task, partition=mrunner_args.partition,
                                        cores=mrunner_args.cores,
