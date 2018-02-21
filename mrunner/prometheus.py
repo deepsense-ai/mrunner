@@ -39,15 +39,16 @@ class PrometheusBackend(object):
         self._chmod_x(remote_path)
         return remote_path
 
-    def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null', ntasks=1):
+    def sbatch(self, task, partition='plgrid', time='24:00:00', cores=24, stdout_path='/dev/null', ntasks=1, gres=None, account=None):
         command = task.construct_command()
         script_name = task.script_name
         remote_path = self._create_remote_script(command, script_name)
-        remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} -c {num_cores} -n {ntasks} -o {stdout_path} {script_path}'.format(partition=partition,
+        remote_command = 'sbatch -p {partition} -t {time} {gpu_gres} {account} -c {num_cores} -n {ntasks} -o {stdout_path} {script_path}'.format(partition=partition,
                                                                   time=time,
                                                                   num_cores=cores,
                                                                   stdout_path=stdout_path,
-                                                                  gpu_gres=('--gres=gpu' if partition == 'plgrid-gpu' else ''),
+                                                                  gpu_gres=('--gres={}'.format(gres) if gres else ''),
+                                                                  account=('-A {}'.format(account) if gres else ''),
                                                                   script_path=remote_path,
                                                                   ntasks=ntasks
                                                                 )

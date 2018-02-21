@@ -194,8 +194,9 @@ class MRunnerPLGridCLI(MRunnerCLI):
                                        cores=mrunner_args.cores,
                                        time=mrunner_args.time,
                                        stdout_path = log_path,
-                                       ntasks=mrunner_args.ntasks)
-
+                                       ntasks=mrunner_args.ntasks,
+                                       account=mrunner_args.A,
+                                       gres=mrunner_args.gres)
 
 
 def main():
