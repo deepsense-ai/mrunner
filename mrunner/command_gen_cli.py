@@ -1,9 +1,11 @@
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import argparse
 import random
 import re
 
 import sys
+
 
 # NOTE(maciek): Code is copied from jobman: https://github.com/crmne/jobman
 def generate_combination(repl):
@@ -73,6 +75,7 @@ def create_parser():
     parser.add_argument('--limit', type=int, help='TODO')
     return parser
 
+
 def main():
     argv = sys.argv[1:]
 
@@ -84,7 +87,7 @@ def main():
         control_args = []
         proper_args = argv
 
-    # print control_args, proper_args
+    # print(control_args, proper_args)
     parser = create_parser()
     args = parser.parse_args(control_args)
     proper_args = [1] + proper_args
@@ -98,10 +101,9 @@ def main():
     if len(commands) == 0:
         commands = [' '.join(argv)]
 
-    print '\n'.join(commands)
+    print('\n'.join(commands))
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
