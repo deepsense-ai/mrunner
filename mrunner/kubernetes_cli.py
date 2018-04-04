@@ -105,24 +105,25 @@ def copy_path(dst_path, src_path):
 
 def main():
     parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@')
-    parser.add_argument('--storage_url', type=str, required=True)
+    parser.add_argument('--storage_url', type=str, required=True, help='Path to directory where neptune CLI will store data for experiment provenance')
 
-    parser.add_argument('--paths_to_dump', type=str, nargs='+', default=[])
-    parser.add_argument('--tags', default=[], type=str, nargs='+')
+    parser.add_argument('--paths_to_dump', type=str, nargs='+', default=[], help="List of files or dirs which will be copied by neptune to storage")
+    parser.add_argument('--tags', default=[], type=str, nargs='+', help='Additional (to those from experiment neptune config) tags '
+                                                                        'which will be added to neptune call')
 
-    parser.add_argument('--nr_gpus', type=int, default=1)
-    parser.add_argument('--docker_image', type=str, required=True)
+    parser.add_argument('--nr_gpus', type=int, default=1, help="Number of gpus to use")
+    parser.add_argument('--docker_image', type=str, required=True, help='Docker image name to use while running experiment with neptune')
 
-    parser.add_argument('--pythonpath', type=str)
-    parser.add_argument('--node_selector_key', type=str)
-    parser.add_argument('--node_selector_value', type=str)
+    parser.add_argument('--pythonpath', type=str, help='Additional paths to be added to PYTHONPATH')
+    parser.add_argument('--node_selector_key', type=str, help="Provide a key for Kubernetes node_selector")
+    parser.add_argument('--node_selector_value', type=str, help="Provide a value for Kubernetes node_selector")
 
-    parser.add_argument('--interactive', action='store_true')
+    parser.add_argument('--interactive', action='store_true', help="Boolean. Use Kubernetes 'kubectl' to create 'pod', without creating 'yaml' files. Currently only 'False' is working.")
 
-    parser.add_argument('--neptune', action='store_true')
-    parser.add_argument('--neptune_exp_config', type=str)
+    parser.add_argument('--neptune', action='store_true', help='Enable neptune for experiment.')
+    parser.add_argument('--neptune_exp_config', type=str, help='Path to experiment neptune config. Possible change the name of the flag to "config". ')
 
-    parser.add_argument('--dry_run', action='store_true')
+    parser.add_argument('--dry_run', action='store_true', help="Mark True is you want have a dry-run without execution.")
 
     mrunner_args, rest_argv = parse_argv(parser, sys.argv)
     sys.exit(run(mrunner_args, rest_argv))

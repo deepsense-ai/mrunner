@@ -64,8 +64,7 @@ def main():
     # TODO: [PZ] think neptune parameter is redundant (may assume that
     parser.add_argument('--neptune', action='store_true', help='Enable neptune for experiment')
     parser.add_argument('--config', type=str, help='Path to experiment neptune config')
-    parser.add_argument('--tags', default=[], type=str, nargs='+',
-                        help='Additional (to those from experiment neptune config) tags '
+    parser.add_argument('--tags', default=[], type=str, nargs='+', help='Additional (to those from experiment neptune config) tags '
                              'which will be added to neptune call')
     parser.add_argument('--docker_image', type=str, help='Docker image name to use while running experiment'
                                                          'with neptune')

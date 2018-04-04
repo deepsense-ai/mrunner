@@ -86,7 +86,8 @@ def run(mrunner_args, rest_argv):
 
     if mrunner_args.srun:
         prometheus.srun(task, partition=mrunner_args.partition,
-                        cores=mrunner_args.cores, ntasks=mrunner_args.ntasks,
+                        cores=mrunner_args.cores,
+                        ntasks=mrunner_args.ntasks,
                         account=mrunner_args.A,
                         gres=mrunner_args.gres)
     elif mrunner_args.sbatch:
@@ -102,32 +103,44 @@ def run(mrunner_args, rest_argv):
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    parser = argparse.ArgumentParser(description='', fromfile_prefix_chars='@')
+    parser = argparse.ArgumentParser(description='Run experiment on PLGRID mahine with optional neptune support',
+                                     fromfile_prefix_chars='@')
 
-    parser.add_argument('--storage_url', type=str)
+    parser.add_argument('--storage_url', type=str,
+                        help='Path to directory where neptune CLI will store data for experiment provenance')
 
-    parser.add_argument('--partition', type=str, default='plgrid-testing')
-    parser.add_argument('--pythonpath', type=str)
+    parser.add_argument('--partition', type=str, default='plgrid-testing', help="Request a specific partition for the resource allocation. "
+                                                                                "If not specified, the default behavior is to allow the slurm controller to select "
+                                                                                "the default partition as designated by the system administrator.")
+    parser.add_argument('--pythonpath', type=str, help='Additional paths to be added to PYTHONPATH')
 
-    parser.add_argument('--neptune', action='store_true')
-    parser.add_argument('--config', type=str)
-    parser.add_argument('--paths_to_dump_conf', type=str)
-    parser.add_argument('--paths_to_dump', type=str, nargs='+')
-    parser.add_argument('--tags', default=[], type=str, nargs='+')
-    parser.add_argument('--with_yaml', action='store_true')
+    parser.add_argument('--neptune', action='store_true', help='Enable neptune for experiment. Allows multiple exps without traffic issues.')
+    parser.add_argument('--config', type=str, help='Path to experiment neptune config')
+    parser.add_argument('--paths_to_dump_conf', type=str, help="File with a list of files or dirs which will be copied by neptune to storage. [Possibly redundant flag]")
+    parser.add_argument('--paths_to_dump', type=str, nargs='+', help="List of files or dirs which will be copied by neptune to storage")
+    parser.add_argument('--tags', default=[], type=str, nargs='+', help='Additional (to those from experiment neptune config) tags '
+                             'which will be added to neptune call')
+    parser.add_argument('--with_yaml', action='store_true', help = "Run experiment with yaml; neptune-offline. [UNCLEAR]")
 
     parser.add_argument('--experiment_id', type=str, default="")
-    parser.add_argument('--after_module_load_cmd', type=str)
-    parser.add_argument('--venv_path', type=str)
-    parser.add_argument('--cores', type=int, default=24)
-    parser.add_argument('--ntasks', type=int, default=24)
-    parser.add_argument('--time', type=str, default='24:00:00')
-    parser.add_argument('--srun', action='store_true')
-    parser.add_argument('--sbatch', action='store_true')
-    parser.add_argument('--script_name', type=str, default="mrunner")
-    parser.add_argument('--modules_to_load', type=str)
-    parser.add_argument('--A', type=str, default=None)
-    parser.add_argument('--gres', type=str, default=None)
+    parser.add_argument('--after_module_load_cmd', type=str, help="Additional command to have, after 'module load' on PLGRID, before sourcing venv")
+    parser.add_argument('--venv_path', type=str, help="Path to your virtual env on PLGRID")
+    parser.add_argument('--cores', type=int, default=24, help="Number of cores to use")
+    parser.add_argument('--ntasks', type=int, default=24, help="This option advises the Slurm controller that job steps run within the allocation will launch "
+                                                               "a maximum of number tasks and to provide for sufficient resources. "
+                                                               "The default is one task per node, but note that the Slurm '--cpus-per-task' option will change this default.")
+    parser.add_argument('--time', type=str, default='24:00:00', help="Set a limit on the total run time of the job allocation. "
+                                                                     "If the requested time limit exceeds the partition's time limit, "
+                                                                     "the job will be left in a PENDING state (possibly indefinitely).")
+    parser.add_argument('--srun', action='store_true', help="Run through srun command")
+    parser.add_argument('--sbatch', action='store_true', help="Run through sbatch command")
+    parser.add_argument('--script_name', type=str, default="mrunner", help="Default 'mrunner'.")
+    parser.add_argument('--modules_to_load', type=str, help="Additional modules to load on PLGRID")
+    parser.add_argument('--A', type=str, default=None, help="Charge resources used by this job to specified account. "
+                                                            "The account is an arbitrary string. "
+                                                            "The account name may be changed after job submission using the scontrol command. ")
+    parser.add_argument('--gres', type=str, default=None, help="Specifies a comma delimited list of generic consumable resources. "
+                                                               "The format of each entry on the list is 'name[[:type]:count]'; example: '--gres=gpu:2,mic=1' ")
 
     mrunner_args, rest_argv = parse_argv(parser, sys.argv)
     sys.exit(run(mrunner_args, rest_argv))
