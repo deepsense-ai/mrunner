@@ -10,14 +10,13 @@ class Cmd(object):
         self._cmd = cmd
         self._exp_dir_path = exp_dir_path
 
-    def _get_cmd(self):
+    @property
+    def command(self):
         return ' '.join(self._cmd)
 
-    def _get_env(self):
+    @property
+    def env(self):
         return {'MRUNNER_EXP_DIR_PATH': self._exp_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
-
-    command = property(fget=_get_cmd)
-    env = property(fget=_get_env)
 
 
 class YamlCmd(object):
@@ -31,7 +30,8 @@ class YamlCmd(object):
         self._storage = neptune_storage
         self._paths_to_dump = paths_to_dump
 
-    def _get_cmd(self):
+    @property
+    def command(self):
         base_argv = self._cmd + ['--config', self._experiment_config_path]
         tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
         dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
@@ -40,26 +40,25 @@ class YamlCmd(object):
         cmd = base_argv + storage_arv + tags_argv + dump_argv + ['--']
         return ' '.join(cmd)
 
-    def _get_env(self):
+    @property
+    def env(self):
         return {'MRUNNER_EXP_DIR_PATH': self._experiment_dir_path, 'MRUNNER_UNDER_NEPTUNE': '0'}
-
-    command = property(fget=_get_cmd)
-    env = property(fget=_get_env)
 
 
 class PlgridScript(object):
 
-    def __init__(self, cmd, cwd=None, env={}, modules_to_load=[], venv_path=None,
+    def __init__(self, cmd, cwd=None, env=None, modules_to_load=None, venv_path=None,
                  after_module_load_cmd=None, script_name="mrunner"):
         self._cmd = cmd
         self._working_dir = cwd
-        self._env = env.copy()
-        self._modules_to_load = modules_to_load
+        self._env = (env or {}).copy()
+        self._modules_to_load = modules_to_load or []
         self._after_module_cmd_load_cmd = after_module_load_cmd
         self._venv_path = venv_path
         self._script_name = script_name
 
-    def _get_cmd(self):
+    @property
+    def command(self):
         lines = ['set -e', ]
         if self._working_dir:
             lines.append('cd ' + self._working_dir)
@@ -72,15 +71,13 @@ class PlgridScript(object):
         lines.append(self._cmd)
         return '\n'.join(lines)
 
-    def _get_env(self):
+    @property
+    def env(self):
         return self._env
 
-    def _get_name(self):
+    @property
+    def name(self):
         return self._script_name
-
-    command = property(fget=_get_cmd)
-    env = property(fget=_get_env)
-    name = property(fget=_get_name)
 
 
 class NeptuneWrapperCmd(object):
@@ -94,7 +91,8 @@ class NeptuneWrapperCmd(object):
         self._paths_to_dump = paths_to_dump
         self._docker_image = docker_image
 
-    def _get_cmd(self):
+    @property
+    def command(self):
         cmd = self._cmd.split(' ') if isinstance(self._cmd, str) else self._cmd
         while cmd[0].startswith('python'):
             cmd = cmd[1:]
@@ -108,11 +106,12 @@ class NeptuneWrapperCmd(object):
         cmd = base_argv + storage_arv + tags_argv + dump_argv + docker_argv + ['--'] + cmd[1:]
         return ' '.join(cmd)
 
-    def _get_env(self):
+    @property
+    def env(self):
 
         # neptune connection config is required because experiments from different neptune accounts may be
         # started on same system account
-        config = self._get_configuration()
+        config = self.conf
         assert config['username'], "Use ~/.neptune.yaml to setup credentials"
         assert config['password'], "Use ~/.neptune.yaml to setup credentials"
 
@@ -126,7 +125,8 @@ class NeptuneWrapperCmd(object):
         neptune_env.update({'MRUNNER_UNDER_NEPTUNE': '1'})
         return neptune_env
 
-    def _get_configuration(self):
+    @property
+    def conf(self):
         """Extracts neptune configuration from global config"""
         try:
             from deepsense.neptune.common.config import neptune_config
@@ -135,7 +135,3 @@ class NeptuneWrapperCmd(object):
             return neptune_config.NeptuneConfig(global_config=global_config)
         except ImportError:
             raise RuntimeError('Install neptune-cli first and configure connection')
-
-    command = property(fget=_get_cmd)
-    env = property(fget=_get_env)
-    conf = property(fget=_get_configuration)
