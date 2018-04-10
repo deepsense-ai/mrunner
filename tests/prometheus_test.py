@@ -52,10 +52,11 @@ class PrometheusTestCase(unittest.TestCase):
         self.assertEqual(local_entries, remote_entries)
 
     def _get_dirs_entries(self, local_root, remote_root):
-        local_entries = [os.path.relpath(os.path.join(root, filename), local_root) for entry in self.paths_to_dump
-                         for root, dirs, files in os.walk(entry['src']) for filename in files]
-        remote_entries = [os.path.relpath(os.path.join(root, filename), remote_root)
-                          for root, dirs, files in os.walk(remote_root) for filename in files]
+        local_entries = sorted([os.path.relpath(os.path.join(root, filename), local_root)
+                                for entry in self.paths_to_dump
+                                for root, dirs, files in os.walk(entry['src']) for filename in files])
+        remote_entries = sorted([os.path.relpath(os.path.join(root, filename), remote_root)
+                                 for root, dirs, files in os.walk(remote_root) for filename in files])
         return local_entries, remote_entries
 
     def test_parse_paths_to_dump(self):
