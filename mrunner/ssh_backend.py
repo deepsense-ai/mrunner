@@ -1,3 +1,0 @@
-
-class SshBackend(object):
-    pass
