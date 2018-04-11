@@ -69,20 +69,6 @@ def my_generate_commands(argv, repeat=1):
     return result
 
 def main():
-    #argv = sys.argv[1:]
-
-    #try:
-    #    where_is_split = argv.index('--')
-    #    control_args = argv[:where_is_split]
-    #    proper_args = argv[where_is_split + 1:]
-    #except ValueError:
-    #    control_args = []
-    #    proper_args = argv
-
-    # print(control_args, proper_args)
-    # parser = create_parser()
-    # args = parser.parse_args(control_args)
-    # proper_args = [1] + proper_args
 
     parser = argparse.ArgumentParser(description='Generate commands', fromfile_prefix_chars='@')
     parser.add_argument('--repeat', type=int, default=1, help='Repeat commands')
