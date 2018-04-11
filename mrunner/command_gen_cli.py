@@ -6,6 +6,7 @@ import re
 
 import sys
 
+from mrunner.utils import parse_argv
 
 # NOTE(maciek): Code is copied from jobman: https://github.com/crmne/jobman
 def generate_combination(repl):
@@ -67,30 +68,14 @@ def my_generate_commands(argv, repeat=1):
 
     return result
 
-
-def create_parser():
-    parser = argparse.ArgumentParser(description='TODO', fromfile_prefix_chars='@')
-    parser.add_argument('--repeat', type=int, default=1, help='TODO')
-    parser.add_argument('--shuffle', action='store_true', help='TODO')
-    parser.add_argument('--limit', type=int, help='TODO')
-    return parser
-
-
 def main():
-    argv = sys.argv[1:]
 
-    try:
-        where_is_split = argv.index('--')
-        control_args = argv[:where_is_split]
-        proper_args = argv[where_is_split + 1:]
-    except ValueError:
-        control_args = []
-        proper_args = argv
+    parser = argparse.ArgumentParser(description='Generate commands', fromfile_prefix_chars='@')
+    parser.add_argument('--repeat', type=int, default=1, help='Repeat commands')
+    parser.add_argument('--shuffle', action='store_true', help='Shuffle commands')
+    parser.add_argument('--limit', type=int, help='Limit number of commands')
 
-    # print(control_args, proper_args)
-    parser = create_parser()
-    args = parser.parse_args(control_args)
-    proper_args = [1] + proper_args
+    args, proper_args = parse_argv(parser, sys.argv)
 
     commands = my_generate_commands(proper_args, repeat=args.repeat)
     if args.shuffle:
