@@ -62,7 +62,8 @@ Also perform following configuration steps:
 ## Kubernetes
 
 Kubernetes system may be used to manage computation resources and
-accordingly schedule experimentation jobs.
+accordingly schedule experimentation jobs. Read more about
+[Kubernetes objects](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/).
 
 **Till now kubernetes support was tested only on GKE** -
 thus it may need some code update in order to run on
@@ -110,7 +111,8 @@ kubectl config view
 Experiments are run in cluster namespace created from experiment
 project name. If such namespace is missing, it is created automatically
 by mrunner. See [cluster namespaces](#cluster-namespaces) section
-how to switch between them.
+how to switch between them. Running experiment requires as well setting
+a context for mrunner. See [remote context](#remote-context) for details on how to do it.
 
 While running experiments on kubernetes, mrunner performs following
 steps:
@@ -134,6 +136,17 @@ mrunner run --config neptune.yaml \
             --base_image python:3 experiment1.py -- --param1 1
 ```
 
+Another example could be:
+
+```commandline
+mrunner --context gke.sandbox run --config $EXP_NEPTUNE_YAML \
+            --base_image python:3 \
+            --requirements $EXP_REQ $EXP_FILE -- \
+            --epochs 3
+```
+Notice (in both examples) that certain flags refer to the `mrunner` itself (eg. config, base_image) and others to experiment/script
+that we wish to run (eg. epochs, param1); the way these two sets are separated is relevant ('--'). Context is provided to mrunner before `run`.
+
 ### Google Kubernetes Engine (GKE)
 
 If you plan to use [GKE](https://cloud.google.com/kubernetes-engine/)
@@ -148,7 +161,7 @@ To configure cluster credentials and kubectl context follow below steps:
 3. Press `connect` button on clusters list
 4. Copy and paste `gcloud` command line
    - example command:
-`gcloud container clusters get-credentials cluster-1 --zone europe-west1-b --project gke-sandbox-200208`
+     `gcloud container clusters get-credentials cluster-1 --zone europe-west1-b --project gke-sandbox-200208`
 
 Also it is required to authorize google cloud sdk by obtaining token
 with:
@@ -352,6 +365,16 @@ mrunner config unset <key>           # delete config key
 Currently available configuration keys:
 
 - `current_context` - default context name which will be used when no other context name is provided in CLI
+
+## Dos and don'ts
+
+- [Kubernetes] you can easily clean-up unnecessary `jobs` and `pods` by runnign this command:
+
+```commandline
+kubectl delete pod <pod-id-here>
+```
+Do not delete `pvc`s unless you're sure you're want that, otherwise you may accidentally delete the storage used by somebody's else job.
+
 
 ## TODO
 
