@@ -62,7 +62,8 @@ Also perform following configuration steps:
 ## Kubernetes
 
 Kubernetes system may be used to manage computation resources and
-accordingly schedule experimentation jobs.
+accordingly schedule experimentation jobs. Read more about
+[Kubernetes objects](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/).
 
 **Till now kubernetes support was tested only on GKE** -
 thus it may need some code update in order to run on
@@ -357,6 +358,15 @@ mrunner config unset <key>           # delete config key
 Currently available configuration keys:
 
 - `current_context` - default context name which will be used when no other context name is provided in CLI
+
+## Dos and don'ts
+
+- [Kubernetes] you can easily clean-up unnecessary `jobs` and `pods` by runnign this command:
+```commandline
+kubectl delete pod <pod-id-here>
+```
+Do not delete `pvc`s unless you're sure you're want that, otherwise you may accidentally delete the storage used by somebody's else job.
+
 
 ## TODO
 
