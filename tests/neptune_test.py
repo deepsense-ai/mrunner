@@ -2,6 +2,7 @@
 import tempfile
 import unittest
 
+import six
 import yaml
 
 from mrunner.cmd import NeptuneWrapperCmd, Cmd
@@ -28,13 +29,13 @@ class NeptuneWrapperCmdTestCase(unittest.TestCase):
             cmd = NeptuneWrapperCmd('python exp1.py --param1 value1 -f', experiment_config_path=config_file.name,
                                     neptune_storage='/tmp/storage')
 
-            vars_with_no_str_values = {k: v for k, v in cmd.env.items() if not isinstance(v, str)}
+            vars_with_no_str_values = {k: v for k, v in cmd.env.items() if not isinstance(v, six.string_types)}
             self.assertTrue(not vars_with_no_str_values)
             self.assertIn('NEPTUNE_PASSWORD', cmd.env)
             self.assertIn('NEPTUNE_USER', cmd.env)
 
             cmd = Cmd('python exp1.py --param1 value1 -f', exp_dir_path='/tmp/storage')
-            vars_with_no_str_values = {k: v for k, v in cmd.env.items() if not isinstance(v, str)}
+            vars_with_no_str_values = {k: v for k, v in cmd.env.items() if not isinstance(v, six.string_types)}
             self.assertTrue(not vars_with_no_str_values)
             self.assertNotIn('NEPTUNE_PASSWORD', cmd.env)
             self.assertNotIn('NEPTUNE_USER', cmd.env)

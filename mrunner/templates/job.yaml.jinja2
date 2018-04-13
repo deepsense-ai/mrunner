@@ -1,0 +1,51 @@
+{%- for job in jobs %}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ job.name }}
+{%- if job.labels %}
+  labels:
+  {%- for label_name, label_value in job.labels %}
+    {{ label_name }}: "{{ label_value }}"
+  {%- endfor %}
+{%- endif %}
+
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: {{ job.name }}
+        image: {{ job.image }}
+    {%- if job.experiment.params %}
+        args: ["{{ job.experiment.params|join('", "') }}"]
+    {%- endif %}
+    {%- if job.env %}
+        env:
+      {%- for env_name, env_value in job.env.items() %}
+          - name: {{ env_name }}
+            value: "{{ env_value }}"
+      {%- endfor %}
+    {%- endif %}
+    {%- if context.limits %}
+        resources:
+          limits:
+        {%- for resource, limit in context.limits.items() %}
+            {{ resource }}: "{{ limit }}"
+        {%- endfor %}
+    {%- endif %}
+        volumeMounts:
+          - mountPath: "{{ context.storage }}"
+            name: experiment-storage
+    {%- if job.node_selector %}
+        nodeSelector:
+        {%- for node_label_name, node_label_value in job.node_selector.items() %}
+          {{ node_label_name }}: "{{ node_label_value }}"
+        {%- endfor %}
+    {%- endif %}
+      volumes:
+        - name: experiment-storage
+          persistentVolumeClaim:
+            claimName: nfs
+{%- endfor %}
