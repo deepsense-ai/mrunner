@@ -362,6 +362,7 @@ Currently available configuration keys:
 ## Dos and don'ts
 
 - [Kubernetes] you can easily clean-up unnecessary `jobs` and `pods` by runnign this command:
+
 ```commandline
 kubectl delete pod <pod-id-here>
 ```
