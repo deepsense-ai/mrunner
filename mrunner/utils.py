@@ -96,3 +96,8 @@ class DObject(Dict):
         if isinstance(item, Dict):
             return item
         return Dict._hook(item)
+
+    def check_required_keys(self, keys):
+        for k in keys:
+            if k not in self:
+                raise AttributeError('{} has missing {} key'.format(self.__class__.__name__, k))

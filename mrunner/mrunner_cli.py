@@ -30,6 +30,7 @@ def cli(ctx, debug, context):
     """Deploy experiments on kubernetes cluster"""
 
     logging.basicConfig(level=debug and logging.DEBUG or logging.INFO)
+    logging.getLogger('pykwalify.core').setLevel(logging.ERROR)
 
     # read configuration
     config_path = get_default_config_path(ctx)
