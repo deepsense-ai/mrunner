@@ -3,19 +3,17 @@
 - [Overview](#overview)
 - [Installation](#installation)
 - [Kubernetes](#kubernetes)
-    - [Local kubernates tools configuration](#local-kubernates-tools-configuration)
-    - [Run experiment](#run-experiment)
-    - [Google Kubernetes Engine (GKE)](#google-kubernetes-engine-gke)
-    - [Cluster namespaces](#cluster-namespaces)
-    - [Persistent volumes](#persistent-volumes)
-    - [Kubernetes tools cheat sheet](#kubernetes-tools-cheat-sheet)
+  - [Setup](#setup)
+  - [Run experiment](#run-experiment)
+  - [Cluster namespaces](#cluster-namespaces)
+  - [Persistent volumes](#persistent-volumes)
+  - [Kubernetes tools cheat sheet](#kubernetes-tools-cheat-sheet)
 - [neptune support](#neptune-support)
-    - [neptune configuration](#neptune-configuration)
-    - [Issues with neptune](#issues-with-neptune)
-        - [kdmi server](#kdmi-server)
-        - [Issue with requirements](#issue-with-requirements)
+  - [neptune configuration](#neptune-configuration)
+  - [Issues with neptune](#issues-with-neptune)
 - [Remote context](#remote-context)
 - [Configuration](#configuration)
+- [dos and don'ts](#dos-and-don'ts)
 - [TODO](#todo)
 
 ## Overview
@@ -28,7 +26,7 @@ less configuration. Main features are:
 - deploy code
 - run experiments
   - use of scheduler, based on mangement of available resources
-  (if remote system supports it)
+(if remote system supports it)
 - monitor experiments using [neptune](neptune-support)
 
 Currently [slurm](https://slurm.schedmd.com) and
@@ -57,7 +55,7 @@ Also perform following configuration steps:
 - [configure neptune](#neptune-configuration)
 - set some [remote contexts](#remote-context) and select active one
 - if you plan to use kubernetes cluster read [kubernetes](#kubernetes)
-  section
+section
 
 ## Kubernetes
 
@@ -69,33 +67,31 @@ accordingly schedule experimentation jobs. Read more about
 thus it may need some code update in order to run on
 on premise cluster.
 
-### Local kubernates tools configuration
+### Setup
 
-To manage cluster resources and jobs install
+(Need to be followed by other persons to write/check steps)
+
+1. To manage cluster resources and jobs install
 [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
 tool and setup local [docker](https://docs.docker.com/install/#server)
 engine.
-
-It is required to point kubectl to which cluster it needs to
-communicate to. It is done by setting kubectl context, by one of
-below method:
-
-1. While using google kubernetes cluster (GKE) it is done
+1. mrunner and kubectl uses kubectl context, which points to which
+cluster we'll communicate to. This structure may be configured, by one of
+below methods:
+   - while using google kubernetes cluster (GKE) it is done
    with gcloud tool - see [GKE](#google-kubernetes-engine-gke) section
    for details,
-1. While using [minikube](https://github.com/kubernetes/minikube)
-there is created `minikube` context during starting local cluster,
-1. Define context in YAML config
-   TODO: add information how to define manually kubernetes clusters and
-contexts.
+   - while using [minikube](https://github.com/kubernetes/minikube)
+   there is created `minikube` context during starting local cluster,
+   - defining context in YAML config (TBD)
 
-mrunner and kubectl uses cluster defined in kubectl context. This can
-be set and checked using:
+    there is possiblity to switch between already configured contexts
+    using:
 
-```commandline
-kubectl config use-context <context_name>
-kubectl config current-context    # show context which is used
-```
+      ```commandline
+      kubectl config use-context <context_name>
+      kubectl config current-context    # show context which is used
+      ```
 
 kubectl configuration is stored in `~/.kube/config` file and
 can be viewed using:
@@ -104,7 +100,28 @@ can be viewed using:
 kubectl config view
 ```
 
-(Need to be followed by other persons to write/check steps)
+##### Google Kubernetes Engine (GKE)
+
+If you plan to use [GKE](https://cloud.google.com/kubernetes-engine/)
+additionally follow below steps:
+
+1. Install [gcloud](https://cloud.google.com/sdk/docs/quickstarts) tool,
+which will provide authorization to access GKE clusters. It also contain functionality
+to manage GKE clusters and Google Cloud Storage (GCS).
+1. Configure cluster credentials and kubectl context follow below steps:
+   - Go to [GKE console](https://console.cloud.google.com/kubernetes)
+   - Select project
+   - Press `connect` button on clusters list
+   - Copy and paste `gcloud` command line
+   - Authorize google cloud sdk by obtaining token with:
+
+    ```sh
+    gcloud auth application-default login
+    ```
+
+#### todo
+
+- [ ] add information how to define manually kubernetes clusters and contexts.
 
 ### Run experiment
 
@@ -118,15 +135,15 @@ While running experiments on kubernetes, mrunner performs following
 steps:
 
 1. Prepares docker image based on provided in command line parameters
-    - see `templates/Dockerfile.jinja2` file for details
-    - during build docker cache is used, so if there is no change
-      in requirements.txt file, build shall be relatively fast
-1. If new image was generated tags it with timestamp and push to
-   docker containers repository.
-1. Ensure kubernetes configuration (create resources if missing)
-    - namespace named after project name exists
-    - [persistent volume claim](#persistent-volumes) exists
-1. Generate kubernetes job and send request to cluster
+   - see `templates/Dockerfile.jinja2` file for details
+   - during build docker cache is used, so if there is no change
+in requirements.txt file, build shall be relatively fast
+2. If new image was generated tags it with timestamp and push to
+docker containers repository.
+3. Ensure kubernetes configuration (create resources if missing)
+   - namespace named after project name exists
+   - [persistent volume claim](#persistent-volumes) exists
+4. Generate kubernetes job and send request to cluster
 
 Sample command call:
 
@@ -144,41 +161,19 @@ mrunner --context gke.sandbox run --config $EXP_NEPTUNE_YAML \
             --requirements $EXP_REQ $EXP_FILE -- \
             --epochs 3
 ```
+
 Notice (in both examples) that certain flags refer to the `mrunner` itself (eg. config, base_image) and others to experiment/script
 that we wish to run (eg. epochs, param1); the way these two sets are separated is relevant ('--'). Context is provided to mrunner before `run`.
 
-### Google Kubernetes Engine (GKE)
-
-If you plan to use [GKE](https://cloud.google.com/kubernetes-engine/)
-install [gcloud](https://cloud.google.com/sdk/docs/quickstarts) tool,
-which provide authorization to access GKE. It also contain functionality
-to manage GKE clusters and Google Cloud Storage.
-
-To configure cluster credentials and kubectl context follow below steps:
-
-1. Go to [GKE console](https://console.cloud.google.com/kubernetes)
-2. Select project
-3. Press `connect` button on clusters list
-4. Copy and paste `gcloud` command line
-   - example command:
-     `gcloud container clusters get-credentials cluster-1 --zone europe-west1-b --project gke-sandbox-200208`
-
-Also it is required to authorize google cloud sdk by obtaining token
-with:
-
-```commandline
-gcloud auth application-default login
-```
-
 ### Cluster namespaces
 
-For each project new namespace is created in kubernetes cluster.
+For each project, new namespace is created in kubernetes cluster.
 This provide freedom in experiments naming, possibility to manage
 resource quota per project, separate storage.
 More details may be found in
-[documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
+[kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
-To switch kubectl to access given namespace resources by default set
+kubectl tool is required to have pointed default namespaces. Otherwise, we shall pass `--namespace|-n` option for each kubectl call. To switch kubectl to access given namespace resources by default set
 kubectl context with:
 
 ```commandline
@@ -187,36 +182,20 @@ kubectl config set-context $(kubectl config current-context) \
                            --namespace=<project_name_based_namespace>
 ```
 
-Otherwise it we shall pass `--namespace|-n` option for each
-`kubectl` call.
-
 ### Persistent volumes
 
 To gather project data from different experiments in single place,
-it is required to create Persistent Volume Claim.
-During execution of each experiment, this volume will be mounted under
-directory pointed by `$STORAGE_DIR` environment variable (the same
-as configured in mrunner context). Such volume is created by mrunner,
-but also it might be configured manually - especially if some specific
-configuration is required. To create such volume use:
+it is required to create set of Persistent Volume related resources (see diagram below and [nfs example](https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs)). During execution of each experiment, it is checked for existance and correctness of this setup. The size of `pvc/storage`defines `default_pvc_size`key from mrunner context, but if not provided volume of size`KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE`(40GB) will be created.
 
-```commandline
-cat <<EOF | kubectl create -f -
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: storage
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi    # set required volume size
-EOF
-```
+![k8s_storage](images/k8s_storage.png)
 
-It is required by adopted convention to name PVC with `storage`.
-This step is required to be run single time per project.
+By default volume is mounted under directory pointed by path from `$STORAGE_DIR` environment variable (the same as passed in `storage` key mrunner context).
+
+##### To find:
+
+- [ ]  how to download data from volume in a convenient way
+- [ ]  how to extend volume
+- [ ]  how to backup/restore volume
 
 ### Kubernetes tools cheat sheet
 
@@ -366,21 +345,22 @@ Currently available configuration keys:
 
 - `current_context` - default context name which will be used when no other context name is provided in CLI
 
-## Dos and don'ts
+## dos and don'ts
 
-- [Kubernetes] you can easily clean-up unnecessary `jobs` and `pods` by runnign this command:
+- while using [kubernetes](#kubernetes) you can easily clean-up unnecessary `jobs` and `pods` by running this command:
 
-```commandline
-kubectl delete pod <pod-id-here>
-```
-Do not delete `pvc`s unless you're sure you're want that, otherwise you may accidentally delete the storage used by somebody's else job.
+   ```commandline
+   kubectl delete job <job-id-here>
+   ```
 
+  Do not delete `pvc`s or `namespace`'s unless you're sure you're want that,
+  otherwise you may accidentally delete the storage used by somebody's else job.
 
 ## TODO
 
-- [ ] support for GKE
-- [ ] support for slurm
-- [ ] dispatcher functionality (generate jobs based on specification
-      in code)
-- [ ] generalize support for kubernetes
-  - [ ] generate kubernetes context based on mrunner remote context
+- [ ]  support for GKE
+- [ ]  support for slurm
+- [ ]  dispatcher functionality (generate jobs based on specification
+in code)
+- [ ]  generalize support for kubernetes
+      - [ ]  generate kubernetes context based on mrunner remote context
