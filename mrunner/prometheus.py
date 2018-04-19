@@ -7,12 +7,14 @@ from fabric.context_managers import cd
 from fabric.contrib.project import rsync_project
 from fabric.operations import put
 from fabric.state import env
+from paramiko.agent import Agent
 
 from mrunner.utils import id_generator
 
 
 class PrometheusBackend(object):
     def __init__(self, username, host, scratch_space):
+        assert Agent().get_keys(), "Add your private key to ssh agent using 'ssh-add' command"
         self.host = host
         self.username = username
         self.host_string = '{username}@{host}'.format(username=self.username, host=self.host)
