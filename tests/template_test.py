@@ -3,7 +3,8 @@ import unittest
 
 from path import Path
 
-from mrunner.config import Context, Experiment
+from mrunner.config import Context
+from mrunner.experiment import Experiment
 from mrunner.utils import GeneratedTemplateFile, DObject
 
 
@@ -25,11 +26,9 @@ ARG STORAGE_DIR=/storage
 
 COPY requirements.txt ${EXP_DIR}/requirements.txt
 RUN pip install --no-cache-dir -r $EXP_DIR/requirements.txt
-
 COPY . ${EXP_DIR}/.
 COPY src ${EXP_DIR}/src
 COPY tests ${EXP_DIR}/tests
-
 ENV STORAGE_DIR=${STORAGE_DIR}
 
 VOLUME ${STORAGE_DIR}
