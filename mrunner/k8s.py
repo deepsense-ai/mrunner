@@ -67,7 +67,7 @@ class StandardPVC(client.V1PersistentVolumeClaim):
         super(StandardPVC, self).__init__(metadata=client.V1ObjectMeta(name=name), spec=pvc_spec)
 
 
-class NFSPod(client.V1Pod):
+class NFSDeployment(client.V1Deployment):
     """
     Pod which contains NFS server to share mounted volume
     See details on https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
@@ -88,8 +88,13 @@ class NFSPod(client.V1Pod):
         volume_source = client.V1PersistentVolumeClaimVolumeSource(claim_name=storage_pvc)
         volume = client.V1Volume(name=internal_volume_name, persistent_volume_claim=volume_source)
         pod_spec = client.V1PodSpec(containers=[ctr], volumes=[volume])
+        pod_metadata = client.V1ObjectMeta(labels=self.LABELS)
+        pod_template = client.V1PodTemplateSpec(metadata=pod_metadata, spec=pod_spec)
+        rs_spec = client.V1ReplicaSetSpec(replicas=1,
+                                          selector=client.V1LabelSelector(match_labels=self.LABELS),
+                                          template=pod_template)
         metadata = client.V1ObjectMeta(name=name, labels=self.LABELS)
-        super(NFSPod, self).__init__(metadata=metadata, spec=pod_spec)
+        super(NFSDeployment, self).__init__(metadata=metadata, spec=rs_spec)
 
 
 class NFSSvc(client.V1Service):
@@ -99,8 +104,8 @@ class NFSSvc(client.V1Service):
 
     def __init__(self, name):
         nfs_service_spec = client.V1ServiceSpec(ports=[client.V1ServicePort(name=k, port=v)
-                                                       for k, v in NFSPod.PORTS.items()],
-                                                selector=NFSPod.LABELS)
+                                                       for k, v in NFSDeployment.PORTS.items()],
+                                                selector=NFSDeployment.LABELS)
         super(NFSSvc, self).__init__(metadata=client.V1ObjectMeta(name=name), spec=nfs_service_spec)
 
 
@@ -146,6 +151,7 @@ class KubernetesBackend(object):
         config.load_kube_config()
         self.core_api = client.CoreV1Api()
         self.batch_api = client.BatchV1Api()
+        self.apps_api = client.AppsV1Api()
 
     def run(self, image, experiment):
         experiment = ExperimentRunOnKubernetes(**experiment.to_dict())
@@ -171,8 +177,8 @@ class KubernetesBackend(object):
                               StandardPVC(name=self.DEFAULT_STORAGE_PVC_NAME,
                                           size=self._context.default_pvc_size or self.DEFAULT_STORAGE_PVC_SIZE,
                                           access_mode="ReadWriteOnce"))
-        self._ensure_resource('pod', experiment.namespace, nfs_svc_name,
-                              NFSPod(name=nfs_svc_name, storage_pvc=self.DEFAULT_STORAGE_PVC_NAME))
+        self._ensure_resource('dep', experiment.namespace, nfs_svc_name,
+                              NFSDeployment(name=nfs_svc_name, storage_pvc=self.DEFAULT_STORAGE_PVC_NAME))
         _, nfs_svc = self._ensure_resource('svc', experiment.namespace, nfs_svc_name, NFSSvc(name=nfs_svc_name))
 
         nfs_svc_ip = nfs_svc.spec.cluster_ip
@@ -192,6 +198,7 @@ class KubernetesBackend(object):
             create_kwargs['namespace'] = namespace
 
         list_fun, create_fun = {
+            'dep': (self.apps_api.list_namespaced_deployment, self.apps_api.create_namespaced_deployment),
             'job': (self.batch_api.list_namespaced_job, self.batch_api.create_namespaced_job),
             'namespace': (self.core_api.list_namespace, self.core_api.create_namespace),
             'pod': (self.core_api.list_namespaced_pod, self.core_api.create_namespaced_pod),
