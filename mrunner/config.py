@@ -82,7 +82,7 @@ class ConfigParser(object):
         return config
 
     def save(self, config):
-        from StringIO import StringIO
+        from six import StringIO
 
         # first dump config to memory
         output = StringIO()
@@ -155,7 +155,7 @@ def context(ctx):
 @context.command(name='add')
 @click.option('--name', required=True, help='remote context name')
 @click.option('--type', required=True,
-              type=click.Choice(['kubernetes', 'slurm-srun', 'slurm-sbatch']), help='type of context')
+              type=click.Choice(['kubernetes', 'slurm']), help='type of context')
 @click.option('--storage', default=None, help='storage path to which neptune will copy source code')
 @click.option('--resources', default=None, help='resources list to request')
 @click.option('--registry_url', default=None, help='url to docker container\'s registry')
@@ -183,7 +183,7 @@ def context_add(ctx, name, type, storage, resources, registry_url, neptune):
 @click.pass_context
 def context_edit(ctx, name):
     """edit context"""
-    from StringIO import StringIO
+    from six import StringIO
 
     config = Config(**ctx.obj['config'])
     config_path = ctx.obj['config_path']
@@ -200,13 +200,15 @@ def context_edit(ctx, name):
             updated_context = updated_text and Context(**yaml.load(StringIO(updated_text))) or context
 
             if updated_context.name != context.name:
-                raise ValueError('Context name shall not be changed')
+                del config.contexts[context.name]
+                if config.current_context == context.name:
+                    config.set('current_context', updated_context.name)
 
-            config.contexts[name] = updated_context
+            config.contexts[updated_context.name] = updated_context
         else:
             click.echo('No changes in context')
     except ValueError as e:
-        raise click.ClickException(e.message)
+        raise click.ClickException(e)
     except yaml.parser.ParserError as e:
         raise click.ClickException('Could not parser YAML')
     ConfigParser(config_path).save(config)

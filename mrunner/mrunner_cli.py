@@ -6,7 +6,7 @@ import click
 from path import Path
 
 from mrunner.cmd import NeptuneWrapperCmd
-from mrunner.config import ConfigParser, config, context
+from mrunner.config import ConfigParser, config, context, Context
 from mrunner.docker_engine import DockerEngine
 from mrunner.experiment import Experiment
 from mrunner.k8s import KubernetesBackend
@@ -29,7 +29,7 @@ def get_default_config_path(ctx):
 def cli(ctx, debug, context):
     """Deploy experiments on kubernetes cluster"""
 
-    log_tags_to_suppress = ['pykwalify', 'docker', 'kubernetes']
+    log_tags_to_suppress = ['pykwalify', 'docker', 'kubernetes', 'paramiko']
     logging.basicConfig(level=debug and logging.DEBUG or logging.INFO)
     for tag in log_tags_to_suppress:
         logging.getLogger(tag).setLevel(logging.ERROR)
@@ -47,7 +47,7 @@ def cli(ctx, debug, context):
 
     ctx.obj = {'config_path': config_path,
                'config': config,
-               'context': config.contexts.get(context_name, None)}
+               'context': Context(**config.contexts.get(context_name, None))}
 
 
 @cli.command()
