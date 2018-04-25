@@ -1,7 +1,7 @@
 FROM {{ experiment.base_image }}
 
 ARG EXP_DIR=/experiment
-ARG STORAGE_DIR={{ context.storage }}
+ARG STORAGE_DIR={{ experiment.storage_dir }}
 
 COPY {{ requirements_file }} ${EXP_DIR}/requirements.txt
 RUN pip install --no-cache-dir -r $EXP_DIR/requirements.txt

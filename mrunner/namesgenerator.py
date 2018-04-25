@@ -6,6 +6,7 @@
 # MIT License
 
 import random
+import string
 
 left = [
   'admiring',
@@ -595,6 +596,11 @@ def get_random_name(sep='_'):
         if name == 'boring' + sep + 'wozniak': # Steve Wozniak is not boring
             continue
         return name
+
+
+def id_generator(n=10):
+    return ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(n))
+
 
 if __name__ == '__main__':
     print(get_random_name())

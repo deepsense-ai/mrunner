@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from mrunner.utils import DObject
+import attr
+from path import Path
 
+from mrunner.utils import make_attr_class
 
-class Experiment(DObject):
+COMMON_EXPERIMENT_MANDATORY_FIELDS = [
+    ('backend_type', dict()),
+    ('name', dict()),
+    ('storage_dir', dict()),
+    ('cmd', dict())
+]
 
-    @property
-    def cmd_without_params(self):
-        cmd = self.cmd.command.split(' -- ')[0] + ' --' if self.cmd else ''
-        return cmd.split(' ')
+COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
+    ('project', dict(default='sandbox')),
+    ('requirements', dict(default=attr.Factory(list), type=list)),
+    ('exclude', dict(default=attr.Factory(list), type=list)),
+    ('paths_to_copy', dict(default=attr.Factory(list), type=list)),
+    ('env', dict(default=attr.Factory(dict), type=dict)),
+    ('resources', dict(default=attr.Factory(dict), type=dict)),
+    ('cwd', dict(default=attr.Factory(Path.getcwd))),
+]
 
-    @property
-    def params(self):
-        cmd = self.cmd.command.split(' -- ')[1] if self.cmd else ''
-        return cmd.split(' ')
-
-    @property
-    def all_env(self):
-        envs = dict(self.env)
-        envs.update(self.cmd.env if self.cmd else {})
-        return envs
+COMMON_EXPERIMENT_FIELDS = COMMON_EXPERIMENT_MANDATORY_FIELDS + COMMON_EXPERIMENT_OPTIONAL_FIELDS
+Experiment2 = make_attr_class('Experiment2', COMMON_EXPERIMENT_FIELDS, frozen=True)

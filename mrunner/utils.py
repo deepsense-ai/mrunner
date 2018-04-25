@@ -1,27 +1,12 @@
 import datetime
-import errno
-import os
-import random
-import string
+from collections import namedtuple, OrderedDict
 from tempfile import NamedTemporaryFile
 
-from addict import Dict
+import attr
 from jinja2 import Environment, PackageLoader, StrictUndefined
+from path import Path
 
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-        return path
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            return path
-        else:
-            raise
-
-
-def id_generator(n=10):
-    return ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(n))
+from mrunner.namesgenerator import id_generator
 
 
 def get_experiment_dirname():
@@ -57,7 +42,7 @@ class TempFile(object):
 
     @property
     def path(self):
-        return self._file.name
+        return Path(self._file.name)
 
 
 class GeneratedTemplateFile(TempFile):
@@ -69,35 +54,51 @@ class GeneratedTemplateFile(TempFile):
         self.write(payload)
 
 
-class DObject(Dict):
+PathToDump = namedtuple('PathToDump', 'local_path rel_remote_path')
 
-    def __setattr__(self, name, value):
-        raise AttributeError('{} object is immutable'.format(self.__class__.__name__))
 
-    def to_dict(self):
+def get_paths_to_copy(paths_to_copy=None, exclude=None):
+    """Lists paths to copy from current working directory, after excluding paths from exclude list;
+    additionally paths_to_copy are copied"""
 
-        base = {}
-        for key, value in self.items():
-            # This method was required, because original function doesn't convert recursively whole object
-            # TODO: investigate why value is class Dict not child of DObject (ex. Config)
-            # print(key, value, value.__class__, type(class)
-            if isinstance(value, Dict):
-                base[key] = value.to_dict()
-            elif isinstance(value, (list, tuple)):
-                base[key] = type(value)(
-                    item.to_dict() if isinstance(item, type(self)) else
-                    item for item in value)
-            else:
-                base[key] = value
-        return base
+    if paths_to_copy is None:
+        paths_to_copy = []
+    if exclude is None:
+        exclude = []
+    exclude = [Path(e).abspath() for e in exclude]
 
-    @classmethod
-    def _hook(cls, item):
-        if isinstance(item, Dict):
-            return item
-        return Dict._hook(item)
+    def _list_dir(d):
+        directories = []
+        for p in Path(d).listdir():
+            p = p.abspath()
+            excluded = False
+            for e in exclude:
+                if e.startswith(p):
+                    excluded = True
+                    # if excluded subdir - not whole current
+                    if not e.samefile(p):
+                        directories += _list_dir(p)
+            if not excluded:
+                directories.append(PathToDump(p.relpath('.'), p.relpath('.')))
+        return directories
 
-    def check_required_keys(self, keys):
-        for k in keys:
-            if k not in self:
-                raise AttributeError('{} has missing {} key'.format(self.__class__.__name__, k))
+    result = _list_dir(Path('.'))
+    for external in paths_to_copy:
+        if ':' in external:
+            src, rel_dst = external.split(':')
+        else:
+            src = external
+            # get relative to cwd split into items on each '/' and remove relative parts
+            rel_dst = '/'.join([item for item in Path(external).relpath('.').splitall() if item and item != '..'])
+        result.append(PathToDump(Path(src).relpath('.'), Path(rel_dst).relpath('.')))
+    return result
+
+
+def make_attr_class(class_name, fields, **class_kwargs):
+    fields = OrderedDict([(k, attr.ib(**kwargs) if isinstance(kwargs, dict) else kwargs) for k, kwargs in fields])
+    return attr.make_class(class_name, fields, **class_kwargs)
+
+
+def filter_only_attr(AttrClass, d):
+    available_fields = [f.name for f in attr.fields(AttrClass)]
+    return {k: v for k, v in d.items() if k in available_fields}

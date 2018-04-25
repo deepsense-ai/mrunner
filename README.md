@@ -1,20 +1,24 @@
 # mrunner
 
 - [Overview](#overview)
-- [Installation](#installation)
+- [Installation and initial setup](#installation-and-initial-setup)
+  - [Remote context](#remote-context)
+  - [Configuration subcommand](#configuration-subcommand)
+- [slurm](#slurm)
+  - [Setup](#setup-slurm)
+  - [Run experiment](#run-experiment-on-slurm)
 - [Kubernetes](#kubernetes)
-  - [Setup](#setup)
-  - [Run experiment](#run-experiment)
+  - [Setup](#setup-kubernetes)
+  - [Remote context keys](#remote-context-keys-for-kubernetes)
+  - [Run experiment](#run-experiment-on-kubernetes)
   - [Cluster namespaces](#cluster-namespaces)
   - [Persistent volumes](#persistent-volumes)
   - [Kubernetes tools cheat sheet](#kubernetes-tools-cheat-sheet)
 - [neptune support](#neptune-support)
   - [neptune configuration](#neptune-configuration)
   - [Issues with neptune](#issues-with-neptune)
-- [Remote context](#remote-context)
-- [Configuration](#configuration)
 - [dos and don'ts](#dos-and-don'ts)
-- [TODO](#todo)
+- [Other commands (deprecated)](#other-commands-(deprecated))
 
 ## Overview
 
@@ -33,29 +37,171 @@ Currently [slurm](https://slurm.schedmd.com) and
 [kubernetes](http://kubernetes.io) clusters are supported.
 It is also possible to run experiment locally.
 
-## Installation
+## Installation and initial setup
 
 mrunner is tested on python2.7 and python3.5, but newer versions
 of python3 shall also work.
 Additionally we recommend to install and use mrunner in
 [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/).
 
-To install it use following commands:
+1. To install it use following commands:
 
-```shell
-pip install neptune-cli==1.6
-pip install git+ssh://git@pascal-tower01.intra.codilime.com/ml-robotics/mrunner.git@feature/k8s
+   ```shell
+   pip install neptune-cli==1.6
+   pip install git+ssh://git@pascal-tower01.intra.codilime.com/ml-robotics/mrunner.git@feature/k8s
+   ```
+
+   Above sequence is related with neptune
+   [issues](#issue-with-requirements).
+
+1. Set some [remote contexts](#remote-context) and select active one
+1. Configure clients for at least one system:
+   - [slurm](#slurm)
+   - [kubernetes](#kubernetes)
+
+### Remote context
+
+To avoid passing details on configuration of computation system, it is possible
+to store predefined configuration parameters. Each configuration is named and
+can be selected during experiment start or set by default:
+
+```commandline
+mrunner --context plgrid.agents run foo.py -- --param1 2
+mrunner run foo.py -- --param1 2    # run with context defined in current_context config key
 ```
 
-Above sequence is related with neptune
-[issues](#issue-with-requirements).
+Set of keys depends on type of remote context. For description
+of available keys go to proper sections (ex. [slurm](#remote-context-keys-for-slurm),
+[kubernetes](#remote-context-keys-for-kubernetes)).
 
-Also perform following configuration steps:
+To manage contexts use `context` command. Example calls:
 
-- [configure neptune](#neptune-configuration)
-- set some [remote contexts](#remote-context) and select active one
-- if you plan to use kubernetes cluster read [kubernetes](#kubernetes)
-section
+```commandline
+mrunner context
+mrunner context add --name gke.sandbox --type kubernetes \
+                    --registry_url https://gcr.io --storage /storage
+                    --resources "tpu=1 cpu=4"
+mrunner context edit gke.sandbox               # opens editor with context parameters
+mrunner context delete gke.sandbox
+```
+
+Example remote contexts':
+
+```yaml
+name: gke.sandbox
+type: kubernetes
+registry_url: https://gcr.io
+resources: cpu=4 tpu=1
+neptune: true
+storage: /storage
+```
+
+To set active context set `current_context` config key
+(see section [configuration subcommand](#configuration-subcommand))
+
+### Configuration subcommand
+
+mrunner configuration may be set using `config` command. Example calls:
+
+```commandline
+mrunner config                       # show current configuration
+mrunner config set <key> <value>     # set value of config key
+mrunner config unset <key>           # delete config key
+```
+
+Currently available configuration keys:
+
+- `current_context` - default context name which will be used when no other context name is provided in CLI
+
+
+## slurm
+
+### Setup slurm
+
+
+    
+### remote context keys for slurm
+
+Possible remote context keys:
+
+| key                  | req | description                                          | example            |
+| -------------------- | --- | ---------------------------------------------------  | ------------------ |
+| name                 |  R  | unique name of context which identifies him          | plgrid.plggluna.sandbox  |
+| type                 |  R  | shall equal `slurm`                                  | slurm              |
+| slurm_url            |  R  | username and address of slurm cluster                | chnorris@pro.cyfronet.pl    |
+| storage              |  R  | path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled; may use env variables) | /storage |
+| partition            |  R  | request a specific slurm partition for the resource allocation | plgrid-testing     |
+| user_id              |  R  | any, meaningful user id used to identify owner of experiment | pz        |
+| scratch_dir          |  O  | subdirectories under $SCRATCH dir (default `mrunner`) | mrunner            |
+| resources            |  O  | defines resource limits for every experiment (by default no resource limits) | cpu=4 gpu=1 mem=8G | 
+| neptune              |  O  | enable/disable neptune (by default enabled)          | true               |
+| modules_to_load      |  O  | list of space separated additional slurm modules to load  | plgrid/tools/python/3.6.0 plgrid/tools/ffmpeg/3.2.2 |
+| after_module_load_ cmd | O | shell oneliner executed after slurm module load, before sourcing venv | export PATH=/net/people/plghenrykm/anaconda2/bin:$PATH; source activate opensim-rl-2.7 |
+| venv                 |  O  | path to virtual environment; can be overwritten by CLI `venv` option | '/net/people/plghenrykm/ppo_tpu/ppo_env |
+
+| time                 |  O  | Set a limit on the total run time of the job allocation. If the requested time limit exceeds the partition's time limit, the job will be left in a PENDING state (possibly indefinitely). (Used with `sbatch` flag) | 3600000 |
+| ntasks               |  O  | This option advises the slurm controller that job steps run within the allocation will launch a maximum of number tasks and to provide for sufficient resources. The default is one task per node, but note that the Slurm '--cpus-per-task' option will change this default.|
+
+### plgrid
+
+Filesystem:
+- `/net/scratch` - lustre filesystem meant for short term use (cleaned after some period of time? 1 month? number of files quota?)
+    - `$SCRATCH` - your account scratch directory
+    - `$SCRATCH/mrunner` - current default scratch directory for mrunner 
+- `/net/archive` - lustre filesystem
+    - `$PLG_GROUPS_STORAGE` - currently it points to `/net/archive/groups`
+- `/net/people` - NFS filesystem
+    - `$HOME` - your home directory (it is in `/net/people`)
+    - 
+
+Read [best practices](https://proteusmaster.urcf.drexel.edu/urcfwiki/index.php/Lustre_Scratch_Filesystem#Best_Practices)
+while using lustre filesystem (not exactly for plgrid cluster, but certainly shall be used during)
+
+### Run experiment on slurm
+
+Available options specific for slurm cluster:
+
+| key             | req | description / additional information             | example            |
+| --------------- | --- | ------------------------------------------------ | ------------------ |
+| config          |  R  | path to neptune experiment configuration; mrunner uses i.a. project and experiment names, parameters list | neptune.yaml |
+| base_image      |  R  | name and tag of base docker image used to build experiment docker image | python:3         |
+| requirements    |  R  | path to requirements.txt file with python requirements                  | requirements.txt |
+
+Sample command call:
+
+```commandline
+mrunner run --config neptune.yaml \
+            --requirements requirements.txt  \
+            --base_image python:3 experiment1.py -- --param1 1
+```
+
+Another example could be:
+
+```commandline
+mrunner --context gke.sandbox run --config neptune.yaml \
+                                  --base_image python:3 \
+                                  --requirements requirements.txt \
+                                  -- experiment1.py -- --epochs 3
+```
+
+Notice (in both examples) that certain flags refer to the `mrunner` itself
+(eg. config, base_image) and others to experiment/script that we wish to run (eg. epochs, param1);
+the way these two sets are separated is relevant ('--'). Context is provided to mrunner before `run`.
+
+While running experiments on kubernetes, mrunner performs following
+steps:
+
+1. Prepares docker image based on provided in command line parameters
+   - see `templates/Dockerfile.jinja2` file for details
+   - during build docker cache is used, so if there is no change
+in requirements.txt file, build shall be relatively fast
+2. If new image was generated tags it with timestamp and published in
+docker containers repository.
+3. Ensure kubernetes configuration (create resources if missing)
+   - namespace named after project name exists; see [cluster namespaces](#cluster-namespaces) section
+how to switch `kubectl` between them.
+   - [persistent volume claim](#persistent-volumes)
+4. Generate kubernetes job - in fact your experiment
 
 ## Kubernetes
 
@@ -67,7 +213,7 @@ accordingly schedule experimentation jobs. Read more about
 thus it may need some code update in order to run on
 on premise cluster.
 
-### Setup
+### Setup kubernetes
 
 (Need to be followed by other persons to write/check steps)
 
@@ -118,32 +264,31 @@ to manage GKE clusters and Google Cloud Storage (GCS).
     ```sh
     gcloud auth application-default login
     ```
+    
+### remote context keys for kubernetes
 
-#### todo
+Possible remote context keys:
 
-- [ ] add information how to define manually kubernetes clusters and contexts.
+| key             | req | description                                      | example            |
+| --------------- | --- | ------------------------------------------------ | ------------------ |
+| name            |  R  | unique name of context which identifies him      | rl.sandbox         |
+| type            |  R  | shall equal `kubernetes`                         | kubernetes         |
+| storage         |  R  | path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled) | /storage |
+| registry_url    |  R  | url to docker image repository where built experiment images will be published (shall be available also from cluster level)              | https://gcr.io     |
+| resources       |  O  | defines resource limits for every experiment (by default no resource limits) | cpu=4 tpu=1 mem=8G |
+| neptune         |  O  | enable/disable neptune (by default enabled)      | true               |
+| google_project_id | O | if using GKE set this key with google project id | rl-sandbox-1234    |
+| default_pvc_size  | O | size of storage created for new project (see [persistent volumes](#persistent-volumes) section; by default creates volume of size `KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE`) | 100G |
 
-### Run experiment
+### Run experiment on kubernetes
 
-Experiments are run in cluster namespace created from experiment
-project name. If such namespace is missing, it is created automatically
-by mrunner. See [cluster namespaces](#cluster-namespaces) section
-how to switch between them. Running experiment requires as well setting
-a context for mrunner. See [remote context](#remote-context) for details on how to do it.
+Available options specific for kubernetes cluster:
 
-While running experiments on kubernetes, mrunner performs following
-steps:
-
-1. Prepares docker image based on provided in command line parameters
-   - see `templates/Dockerfile.jinja2` file for details
-   - during build docker cache is used, so if there is no change
-in requirements.txt file, build shall be relatively fast
-2. If new image was generated tags it with timestamp and push to
-docker containers repository.
-3. Ensure kubernetes configuration (create resources if missing)
-   - namespace named after project name exists
-   - [persistent volume claim](#persistent-volumes) exists
-4. Generate kubernetes job and send request to cluster
+| key             | req | description / additional information             | example            |
+| --------------- | --- | ------------------------------------------------ | ------------------ |
+| config          |  R  | path to neptune experiment configuration; mrunner uses i.a. project and experiment names, parameters list | neptune.yaml |
+| base_image      |  R  | name and tag of base docker image used to build experiment docker image | python:3         |
+| requirements    |  R  | path to requirements.txt file with python requirements                  | requirements.txt |
 
 Sample command call:
 
@@ -156,14 +301,31 @@ mrunner run --config neptune.yaml \
 Another example could be:
 
 ```commandline
-mrunner --context gke.sandbox run --config $EXP_NEPTUNE_YAML \
-            --base_image python:3 \
-            --requirements $EXP_REQ $EXP_FILE -- \
-            --epochs 3
+mrunner --context gke.sandbox run --config neptune.yaml \
+                                  --base_image python:3 \
+                                  --requirements requirements.txt \
+                                  -- experiment1.py -- --epochs 3
 ```
 
-Notice (in both examples) that certain flags refer to the `mrunner` itself (eg. config, base_image) and others to experiment/script
-that we wish to run (eg. epochs, param1); the way these two sets are separated is relevant ('--'). Context is provided to mrunner before `run`.
+Notice (in both examples) that certain flags refer to the `mrunner` itself
+(eg. config, base_image) and others to experiment/script that we wish to run (eg. epochs, param1);
+the way these two sets are separated is relevant ('--'). Context is provided to mrunner before `run`.
+
+While running experiments on kubernetes, mrunner performs following
+steps:
+
+1. Prepares docker image based on provided in command line parameters
+   - see `templates/Dockerfile.jinja2` file for details
+   - during build docker cache is used, so if there is no change
+in requirements.txt file, build shall be relatively fast
+2. If new image was generated tags it with timestamp and published in
+docker containers repository.
+3. Ensure kubernetes configuration (create resources if missing)
+   - namespace named after project name exists; see [cluster namespaces](#cluster-namespaces) section
+how to switch `kubectl` between them.
+   - [persistent volume claim](#persistent-volumes)
+4. Generate kubernetes job - in fact your experiment
+
 
 ### Cluster namespaces
 
@@ -179,7 +341,7 @@ kubectl context with:
 ```commandline
 kubectl get namespace
 kubectl config set-context $(kubectl config current-context) \
-                           --namespace=<project_name_based_namespace>
+                           --namespace=<project_based_namespace>
 ```
 
 ### Persistent volumes
@@ -190,12 +352,6 @@ it is required to create set of Persistent Volume related resources (see diagram
 ![k8s_storage](images/k8s_storage.png)
 
 By default volume is mounted under directory pointed by path from `$STORAGE_DIR` environment variable (the same as passed in `storage` key mrunner context).
-
-##### To find:
-
-- [ ]  how to download data from volume in a convenient way
-- [ ]  how to extend volume
-- [ ]  how to backup/restore volume
 
 ### Kubernetes tools cheat sheet
 
@@ -298,53 +454,6 @@ It potentially cause errors of packages which require some newer versions.
 
 Related neptune team [jira ticket](https://codilime.atlassian.net/browse/NPT-3427)
 
-## Remote context
-
-To avoid passing details on configuration of computation system, it is possible
-to store predefined configuration parameters. Each configuration is named and
-can be selected during experiment start or set by default:
-
-```commandline
-mrunner --context plgrid.agents run foo.py -- --param1 2
-mrunner run foo.py -- --param1 2    # run with context defined in current_context config key
-```
-
-To manage contexts use `context` command. Example calls:
-
-```commandline
-mrunner context
-mrunner context add --name gke.sandbox --type kubernetes \
-                    --registry_url https://gcr.io --storage /storage
-                    --resources "tpu=1 cpu=4"
-mrunner context edit gke.sandbox               # opens editor with context parameters
-mrunner context delete gke.sandbox
-```
-
-Example remote contexts':
-
-```yaml
-name: gke.sandbox
-type: kubernetes
-registry_url: https://gcr.io
-resources: cpu=4 tpu=1
-neptune: true
-storage: /storage
-```
-
-## Configuration
-
-mrunner configuration may be set using `config` command. Example calls:
-
-```commandline
-mrunner config                       # show current configuration
-mrunner config set <key> <value>     # set value of config key
-mrunner config unset <key>           # delete config key
-```
-
-Currently available configuration keys:
-
-- `current_context` - default context name which will be used when no other context name is provided in CLI
-
 ## dos and don'ts
 
 - while using [kubernetes](#kubernetes) you can easily clean-up unnecessary `jobs` and `pods` by running this command:
@@ -356,6 +465,22 @@ Currently available configuration keys:
   Do not delete `pvc`s or `namespace`'s unless you're sure you're want that,
   otherwise you may accidentally delete the storage used by somebody's else job.
 
+## Other commands (deprecated)
+
+### `local_cli` flags
+Set _F_ plus:
+
+* `--config CONFIG` : Path to experiment neptune config
+* `--docker_image DOCKER_IMAGE` : Docker image name to use while running experimentwithn eptune
+
+
+### `command_gen_cli` flags
+Only the following flags are applicable:
+
+* `--repeat REPEAT` : Repeat commands
+* `--shuffle` : Shuffle commands
+* `--limit LIMIT` : Limit number of commands
+
 ## TODO
 
 - [ ]  support for GKE
@@ -364,3 +489,7 @@ Currently available configuration keys:
 in code)
 - [ ]  generalize support for kubernetes
       - [ ]  generate kubernetes context based on mrunner remote context
+- [ ] add information how to define manually kubernetes clusters and contexts.
+- [ ]  how to download data from volume in a convenient way
+- [ ]  how to extend volume
+- [ ]  how to backup/restore volume

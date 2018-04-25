@@ -2,41 +2,71 @@
 import logging
 import re
 
+import attr
 from kubernetes import client, config
 
-from mrunner.experiment import Experiment
+from mrunner.docker_engine import DockerEngine
+from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
+from mrunner.utils import make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
 
 
-class ExperimentRunOnKubernetes(Experiment):
+def _generate_project_namespace(args):
+    return re.sub(r'[ .,_-]+', '-', args.project)
 
-    @property
-    def namespace(self):
-        return re.sub(r'[ .,_-]+', '-', self.project_name)
+
+def _extract_cmd_without_params(args):
+    cmd = args.cmd.command.split(' -- ')[0] + ' --' if args.cmd else ''
+    return cmd.split(' ')
+
+
+def _extract_params(args):
+    cmd = args.cmd.command.split(' -- ')[1] if args.cmd else ''
+    return cmd.split(' ')
+
+
+EXPERIMENT_MANDATORY_FIELDS = [
+    ('registry_url', dict()),  # url to docker registry
+    ('base_image', dict())  # experiment base docker image: name[:version]
+]
+
+EXPERIMENT_OPTIONAL_FIELDS = [
+    ('google_project_id', dict(default='')),
+    ('registry_username', dict(default='')),  # docker image registry credentials (not required for GKE)
+    ('registry_password', dict(default='')),
+    ('cmd_without_params', dict(init=False, default=attr.Factory(_extract_cmd_without_params, takes_self=True))),
+    ('params', dict(init=False, default=attr.Factory(_extract_params, takes_self=True))),
+    ('default_pvc_size', dict(default='')),
+    ('namespace', dict(init=False, default=attr.Factory(_generate_project_namespace, takes_self=True))),
+]
+
+EXPERIMENT_FIELDS = COMMON_EXPERIMENT_MANDATORY_FIELDS + EXPERIMENT_MANDATORY_FIELDS + \
+                    COMMON_EXPERIMENT_OPTIONAL_FIELDS + EXPERIMENT_OPTIONAL_FIELDS
+ExperimentRunOnKubernetes = make_attr_class('ExperimentRunOnKubernetes', EXPERIMENT_FIELDS, frozen=True)
 
 
 class Job(client.V1Job):
     RESOURCE_NAME_MAP = {'cpu': 'cpu', 'mem': 'memory', 'gpu': 'nvidia.com/gpu', 'tpu': 'cloud-tpus.google.com/v2'}
 
-    def __init__(self, image, context, experiment):
-        from namesgenerator import get_random_name
+    def __init__(self, image, experiment):
+        from mrunner.namesgenerator import get_random_name
 
         experiment_name = re.sub(r'[ ,.\-_:;]+', '-', experiment.name)
         name = '{}-{}'.format(experiment_name, get_random_name('-'))
 
-        envs = context.env.to_dict().copy()
-        envs.update(experiment.all_env)
+        envs = experiment.env.copy()
+        envs.update(experiment.cmd.env if experiment.cmd else {})
         envs = {k: str(v) for k, v in envs.items()}
-        resources = context.resources or ''
-        resources = dict([self._map_resources(*r.split('=')) for r in resources.split(' ') if r])
-        internal_volume_name = 'experiment-storage'
 
+        resources = dict([self._map_resources(name, qty) for name, qty in experiment.resources.items()])
+
+        internal_volume_name = 'experiment-storage'
         vol = client.V1Volume(name=internal_volume_name,
                               persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
                                   claim_name=KubernetesBackend.NFS_PVC_NAME))
         ctr = client.V1Container(name=name, image=image, args=experiment.params,
-                                 volume_mounts=[client.V1VolumeMount(mount_path=context.storage,
+                                 volume_mounts=[client.V1VolumeMount(mount_path=experiment.storage_dir,
                                                                      name=internal_volume_name)],
                                  resources=client.V1ResourceRequirements(
                                      limits={k: v for k, v in resources.items()}),
@@ -145,22 +175,23 @@ class KubernetesBackend(object):
     DEFAULT_STORAGE_PVC_NAME = 'storage'
     NFS_PVC_NAME = 'nfs'
 
-    def __init__(self, context):
+    def __init__(self):
         self._check_env()
-        self._context = context
         config.load_kube_config()
         self.core_api = client.CoreV1Api()
         self.batch_api = client.BatchV1Api()
         self.apps_api = client.AppsV1Api()
 
-    def run(self, image, experiment):
-        experiment = ExperimentRunOnKubernetes(**experiment.to_dict())
+    def run(self, experiment):
+
+        experiment = ExperimentRunOnKubernetes(**filter_only_attr(ExperimentRunOnKubernetes, experiment))
+        image = DockerEngine().build_and_publish_image(experiment=experiment)
 
         self.configure_namespace(experiment)
         self.configure_storage_for_project(experiment)
 
         for experiment in [experiment, ]:
-            job = Job(image, self._context, experiment)
+            job = Job(image, experiment)
             job_name = job.to_dict()['metadata']['name']
             self._ensure_resource('job', experiment.namespace, job_name, job)
 
@@ -175,7 +206,7 @@ class KubernetesBackend(object):
 
         self._ensure_resource('pvc', experiment.namespace, self.DEFAULT_STORAGE_PVC_NAME,
                               StandardPVC(name=self.DEFAULT_STORAGE_PVC_NAME,
-                                          size=self._context.default_pvc_size or self.DEFAULT_STORAGE_PVC_SIZE,
+                                          size=experiment.default_pvc_size or self.DEFAULT_STORAGE_PVC_SIZE,
                                           access_mode="ReadWriteOnce"))
         self._ensure_resource('dep', experiment.namespace, nfs_svc_name,
                               NFSDeployment(name=nfs_svc_name, storage_pvc=self.DEFAULT_STORAGE_PVC_NAME))
@@ -216,7 +247,8 @@ class KubernetesBackend(object):
             LOGGER.debug('{}/{} exists'.format(resource_type, name))
         return bool(response.items), resource
 
-    def _check_env(self):
+    @staticmethod
+    def _check_env():
         import subprocess
 
         try:
@@ -230,6 +262,6 @@ class KubernetesBackend(object):
                           ('gcloud', 'https://cloud.google.com/sdk/docs/quickstarts')]:
             try:
                 subprocess.call(cmd, stdout=DEVNULL, stderr=DEVNULL)
-            except OSError as e:
+            except OSError:
                 raise RuntimeError('Missing {} cmd. Please install and setup it first: {}'.format(cmd, link))
         return result

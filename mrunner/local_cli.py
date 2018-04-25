@@ -9,7 +9,8 @@ import sys
 
 import yaml
 
-from mrunner.cmd import Cmd, NeptuneWrapperCmd
+from mrunner.cmd import Cmd
+from mrunner.neptune import NeptuneWrapperCmd
 from mrunner.utils import get_experiment_dirname, parse_argv
 
 LOGGER = logging.getLogger(__name__)

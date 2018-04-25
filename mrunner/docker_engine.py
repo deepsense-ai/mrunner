@@ -2,10 +2,11 @@
 import os
 from subprocess import call
 
+import attr
 from docker.errors import ImageNotFound
 from path import Path
 
-from mrunner.utils import GeneratedTemplateFile, DObject
+from mrunner.utils import GeneratedTemplateFile
 
 
 class RequirementsFile(object):
@@ -13,7 +14,7 @@ class RequirementsFile(object):
     def __init__(self, path, requirements):
         self._path = Path(path)
         with open(path, 'w') as requirements_file:
-            payload = '\n'.join(requirements).encode(encoding='utf-8')
+            payload = '\n'.join(requirements)
             requirements_file.writelines(payload)
 
     def __del__(self):
@@ -24,18 +25,21 @@ class RequirementsFile(object):
         return self._path
 
 
+StaticCmd = attr.make_class('StaticCmd', ['command', 'env'], frozen=True)
+
+
 class DockerFile(GeneratedTemplateFile):
     DEFAULT_DOCKERFILE_TEMPLATE = 'Dockerfile.jinja2'
 
-    def __init__(self, context, experiment, requirements_file):
-        from mrunner.experiment import Experiment
-        experiment_data = experiment.to_dict()
+    def __init__(self, experiment, requirements_file):
+        experiment_data = attr.asdict(experiment)
         # paths in command shall be relative
         cmd = experiment_data.pop('cmd')
         updated_cmd = self._rewrite_paths(experiment.cwd, cmd.command)
-        experiment = Experiment(cmd=DObject(command=updated_cmd, env=cmd.env), **experiment_data)
+        experiment = attr.evolve(experiment, cmd=StaticCmd(command=updated_cmd, env=cmd.env))
+
         super(DockerFile, self).__init__(template_filename=self.DEFAULT_DOCKERFILE_TEMPLATE,
-                                         context=context, experiment=experiment, requirements_file=requirements_file)
+                                         experiment=experiment, requirements_file=requirements_file)
 
     def _rewrite_paths(self, cwd, cmd):
         updated_cmd = []
@@ -48,34 +52,35 @@ class DockerFile(GeneratedTemplateFile):
 
 class DockerEngine(object):
 
-    def __init__(self, context, docker_url=None):
+    def __init__(self, docker_url=None):
         import docker
         base_url = docker_url if docker_url else os.environ.get('DOCKER_HOST', 'unix://var/run/docker.sock')
-        self._context = context
         self._client = docker.DockerClient(base_url=base_url)
-        self._is_gcr = context.registry_url and context.registry_url.startswith('https://gcr.io')
-        if context.registry_url:
-            _login = self._login_with_gcloud if self._is_gcr else self._login_with_docker
-            _login(context)
 
-    def _login_with_docker(self, context):
-        self._client.login(registry=context.registry_url, username=context.registry_username,
-                           password=context.registry_password, reauth=True)
+    def _login_with_docker(self, experiment):
+        self._client.login(registry=experiment.registry_url, username=experiment.registry_username,
+                           password=experiment.registry_password, reauth=True)
 
-    def _login_with_gcloud(self, context):
+    def _login_with_gcloud(self, experiment):
         call('gcloud auth configure-docker'.split(' '))
 
     def build_and_publish_image(self, experiment):
+
+        registry_url = experiment.registry_url
+        self._is_gcr = registry_url and registry_url.startswith('https://gcr.io')
+        if registry_url:
+            _login = self._login_with_gcloud if self._is_gcr else self._login_with_docker
+            _login(experiment)
+
         # requirements filename shall be constant for experiment, to use docker cache during build;
         # thus we don't use dynamic/temporary file names
-        requirements = RequirementsFile(self._generate_requirements_name(self._context, experiment),
-                                        experiment.requirements)
+        requirements = RequirementsFile(self._generate_requirements_name(experiment), experiment.requirements)
 
-        dockerfile = DockerFile(context=self._context, experiment=experiment, requirements_file=requirements.path)
+        dockerfile = DockerFile(experiment=experiment, requirements_file=requirements.path)
         dockerfile_rel_path = Path(experiment.cwd).relpathto(dockerfile.path)
 
         # obtain old image for comparison if there where any changes
-        repository_name = self._generate_repository_name(self._context, experiment)
+        repository_name = self._generate_repository_name(experiment)
         try:
             old_image = self._client.images.get(repository_name + ':latest')
         except ImageNotFound:
@@ -98,21 +103,21 @@ class DockerEngine(object):
         # obtain image name with our tag
         return [tag for tag in image.tags if not tag.endswith('latest')][0]
 
-    def _generate_requirements_name(self, context, experiment):
-        return 'requirements_{}_{}.txt'.format(experiment.project_name, experiment.name)
+    def _generate_requirements_name(self, experiment):
+        return 'requirements_{}_{}.txt'.format(experiment.project, experiment.name)
 
-    def _generate_repository_name(self, context, experiment):
-        image_name = '{}/{}'.format(experiment.project_name, experiment.name)
+    def _generate_repository_name(self, experiment):
+        image_name = '{}/{}'.format(experiment.project, experiment.name)
 
         # while publishing images there is need to prefix them with repository hostname
-        if context.registry_url:
-            registry_name = context.registry_url.split(r'://')[1]
+        if experiment.registry_url:
+            registry_name = experiment.registry_url.split(r'://')[1]
             image_name = '{}/{}'.format(registry_name, image_name)
 
             if self._is_gcr:
-                assert context.google_project_id, 'Configure google_project_id key for current context'
-                image_name = image_name.replace('/{}/'.format(experiment.project_name),
-                                                '/{}/'.format(context.google_project_id))
+                assert experiment.google_project_id, 'Configure google_project_id key for current context'
+                image_name = image_name.replace('/{}/'.format(experiment.project),
+                                                '/{}/'.format(experiment.google_project_id))
 
         return image_name
 
