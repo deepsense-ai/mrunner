@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
+import six
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -93,7 +95,7 @@ class NeptuneWrapperCmd(object):
 
     @property
     def command(self):
-        cmd = self._cmd.split(' ') if isinstance(self._cmd, str) else self._cmd
+        cmd = self._cmd.split(' ') if isinstance(self._cmd, six.string_types) else self._cmd
         while cmd[0].startswith('python'):
             cmd = cmd[1:]
 
