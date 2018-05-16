@@ -3,7 +3,6 @@
 - [Overview](#overview)
 - [Installation and initial setup](#installation-and-initial-setup)
   - [Remote context](#remote-context)
-  - [Configuration subcommand](#configuration-subcommand)
 - [slurm](#slurm)
   - [Setup](#setup-slurm)
   - [Run experiment](#run-experiment-on-slurm)
@@ -48,7 +47,7 @@ Additionally we recommend to install and use mrunner in
 
    ```shell
    pip install neptune-cli==1.6
-   pip install git+ssh://git@pascal-tower01.intra.codilime.com/ml-robotics/mrunner.git@feature/k8s
+   pip install git+ssh://git@pascal-tower01.intra.codilime.com/ml-robotics/mrunner.git@develop
    ```
 
    Above sequence is related with neptune
@@ -66,8 +65,9 @@ to store predefined configuration parameters. Each configuration is named and
 can be selected during experiment start or set by default:
 
 ```commandline
-mrunner --context plgrid.agents run foo.py -- --param1 2
 mrunner run foo.py -- --param1 2    # run with context defined in current_context config key
+mrunner --context plgrid.agents run foo.py -- --param1 2
+mrunner --context plgrid.agents --config mrunner.yaml run foo.py -- --param1 2   # loads configuration from local file (instead of user configuration directory)
 ```
 
 Set of keys depends on type of remote context. For description
@@ -82,7 +82,10 @@ mrunner context add --name gke.sandbox --type kubernetes \
                     --registry_url https://gcr.io --storage /storage
                     --resources "tpu=1 cpu=4"
 mrunner context edit gke.sandbox               # opens editor with context parameters
+mrunner context set-active gke.sandbox
 mrunner context delete gke.sandbox
+mrunner context copy gke.sandbox gke.new
+mrunner --config mrunner.yaml context set-active gke.sandbox
 ```
 
 Example remote contexts':
@@ -96,30 +99,11 @@ neptune: true
 storage: /storage
 ```
 
-To set active context set `current_context` config key
-(see section [configuration subcommand](#configuration-subcommand))
-
-### Configuration subcommand
-
-mrunner configuration may be set using `config` command. Example calls:
-
-```commandline
-mrunner config                       # show current configuration
-mrunner config set <key> <value>     # set value of config key
-mrunner config unset <key>           # delete config key
-```
-
-Currently available configuration keys:
-
-- `current_context` - default context name which will be used when no other context name is provided in CLI
-
-
 ## slurm
 
 ### Setup slurm
 
 
-    
 ### remote context keys for slurm
 
 Possible remote context keys:

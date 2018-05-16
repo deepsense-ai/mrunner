@@ -6,7 +6,12 @@ import click
 import six
 import yaml
 
-Config = attr.make_class('Config', ['contexts', 'current_context'])
+from mrunner.utils import make_attr_class
+
+Config = make_attr_class('Config', [
+    ('contexts', dict(default={})),
+    ('current_context', dict(default='')),
+])
 
 
 class ConfigParser(object):
@@ -15,10 +20,11 @@ class ConfigParser(object):
         self._config_path = file_path
 
     def load(self):
-        config = {}
+        config = Config()
         if self._config_path.exists():
             with self._config_path.open('r') as conf_file:
                 config = Config(**yaml.load(conf_file) or {})
+
         return config
 
     def save(self, config):
@@ -30,7 +36,7 @@ class ConfigParser(object):
         yaml_payload = six.u(output.getvalue())
 
         # then save to file
-        self._config_path.parent.makedirs_p()
+        self._config_path.abspath().parent.makedirs_p()
         with self._config_path.open('w') as config_file:
             config_file.write(yaml_payload)
 
@@ -41,9 +47,9 @@ def context(ctx):
     """manage remote context's"""
     if not ctx.invoked_subcommand:
         config = ctx.obj['config']
-        current_context = ctx.obj['context']
         for context_name in config.contexts:
-            active = current_context and context_name == current_context['context_name']
+            # not showing as active context which name was passed in command line
+            active = config.current_context and context_name == config.current_context
             click.echo('{}{}'.format(context_name, active and '\t(active)' or ''))
 
 
@@ -52,22 +58,25 @@ def context(ctx):
 @click.option('--backend_type', required=True,
               type=click.Choice(['kubernetes', 'slurm']), help='type of backend')
 @click.option('--storage', default=None, help='storage path to which neptune will copy source code')
-@click.option('--resources', default=None, multiple=True, help='resources list to request (ex. cpu=1 mem=2G)')
+@click.option('--resource', default=None, multiple=True,
+              help='resource to request (ex. mem=2G; available types: cpu|mem|gpu|tpu)')
 @click.option('--registry_url', default=None, help='url to docker container\'s registry')
 @click.option('--neptune/--no-neptune', default=True, help='use neptune')
 @click.pass_context
-def context_add(ctx, name, backend_type, storage, resources, registry_url, neptune):
+def context_add(ctx, name, backend_type, storage, resource, registry_url, neptune):
     """add new context"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
     context = {'context_name': name, 'backend_type': backend_type, 'neptune': neptune, 'storage_dir': storage,
-               'registry_url': registry_url, 'resources': dict([r.split('=') for r in resources])}
+               'registry_url': registry_url, 'resources': dict([r.split('=') for r in resource])}
     context = {k: v for k, v in context.items() if v}
     try:
         if name in config.contexts:
             raise ValueError('Context "{}" already exists'.format(name))
         config.contexts[name] = context
+        if len(config.contexts) == 1:
+            config.current_context = name
     except ValueError as e:
         raise click.ClickException(e)
     ConfigParser(config_path).save(config)
@@ -121,6 +130,8 @@ def context_delete(ctx, name):
         if name not in config.contexts:
             raise ValueError('Context "{}" is missing'.format(name))
         del config.contexts[name]
+        if name == config.current_context:
+            config.current_context = ''
     except ValueError as e:
         raise click.ClickException(e)
     ConfigParser(config_path).save(config)

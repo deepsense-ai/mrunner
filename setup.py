@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mrunner',
-    version='0.1.80',
+    version='0.1.86',
     packages=find_packages(),
     include_package_data=True,
     install_requires=['neptune-cli', 'PyYAML', 'fabric3', 'path.py', 'jinja2', 'six', 'attrs>=17.3', 'click',

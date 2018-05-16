@@ -25,10 +25,12 @@ def get_default_config_path(ctx):
 
 @click.group()
 @click.option('--debug/--no-debug', default=False, help='Enable debug messages')
+@click.option('--config', default=None, type=click.Path(dir_okay=False),
+              help='Path to mrunner configuration')
 @click.option('--context', default=None, help='Name of remote context to use '
                                               '(if not provided, "contexts.current" conf key will be used)')
 @click.pass_context
-def cli(ctx, debug, context):
+def cli(ctx, debug, config, context):
     """Deploy experiments on kubernetes cluster"""
 
     log_tags_to_suppress = ['pykwalify', 'docker', 'kubernetes', 'paramiko', 'requests.packages']
@@ -37,25 +39,28 @@ def cli(ctx, debug, context):
         logging.getLogger(tag).setLevel(logging.ERROR)
 
     # read configuration
-    config_path = get_default_config_path(ctx)
+    config_path = Path(config or get_default_config_path(ctx))
+    LOGGER.debug('Using {} as mrunner config'.format(config_path))
     config = ConfigParser(config_path).load()
 
-    context_name = context or config.current_context or None
-    cmd_require_context = ctx.invoked_subcommand not in ['config', 'context']
-    if cmd_require_context and not context_name:
-        raise click.ClickException('Provide context name (use option or set "contexts.current" config key)')
-    if cmd_require_context and context_name not in config.contexts:
-        raise click.ClickException('Could not find predefined context: "{}"'.format(context_name))
+    cmd_require_context = ctx.invoked_subcommand not in ['context']
+    if cmd_require_context:
+        context_name = context or config.current_context or None
+        if not context_name:
+            raise click.ClickException(
+                'Provide context name (use CLI "--context" option or use "mrunner context set-active" command)')
+        if context_name not in config.contexts:
+            raise click.ClickException('Could not find predefined context: "{}". Use context add command.'.format(context_name))
 
-    try:
-        context = config.contexts[context_name]
-        for k in ['neptune', 'storage_dir', 'backend_type', 'context_name']:
-            if k not in context:
-                raise AttributeError('Missing required "{}" context key'.format(k))
-    except KeyError:
-        raise click.ClickException('Unknown context {}'.format(context_name))
-    except AttributeError as e:
-        raise click.ClickException(e)
+        try:
+            context = config.contexts[context_name]
+            for k in ['neptune', 'storage_dir', 'backend_type', 'context_name']:
+                if k not in context:
+                    raise AttributeError('Missing required "{}" context key'.format(k))
+        except KeyError:
+            raise click.ClickException('Unknown context {}'.format(context_name))
+        except AttributeError as e:
+            raise click.ClickException(e)
 
     ctx.obj = {'config_path': config_path,
                'config': config,
