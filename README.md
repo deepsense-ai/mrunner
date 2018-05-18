@@ -94,7 +94,9 @@ Example remote contexts':
 name: gke.sandbox
 type: kubernetes
 registry_url: https://gcr.io
-resources: cpu=4 tpu=1
+resources:
+  cpu: 4
+  tpu: 1
 neptune: true
 storage: /storage
 ```
@@ -117,7 +119,7 @@ Possible remote context keys:
 | partition            |  R  | request a specific slurm partition for the resource allocation | plgrid-testing     |
 | user_id              |  R  | any, meaningful user id used to identify owner of experiment | pz        |
 | scratch_dir          |  O  | subdirectories under $SCRATCH dir (default `mrunner`) | mrunner            |
-| resources            |  O  | defines resource limits for every experiment (by default no resource limits) | cpu=4 gpu=1 mem=8G | 
+| resources            |  O  | defines resource limits for every experiment (by default no resource limits) | {cpu: 4, gpu: 1, mem: 8G} | 
 | neptune              |  O  | enable/disable neptune (by default enabled)          | true               |
 | modules_to_load      |  O  | list of space separated additional slurm modules to load  | plgrid/tools/python/3.6.0 plgrid/tools/ffmpeg/3.2.2 |
 | after_module_load_ cmd | O | shell oneliner executed after slurm module load, before sourcing venv | export PATH=/net/people/plghenrykm/anaconda2/bin:$PATH; source activate opensim-rl-2.7 |
@@ -259,7 +261,7 @@ Possible remote context keys:
 | type            |  R  | shall equal `kubernetes`                         | kubernetes         |
 | storage         |  R  | path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled) | /storage |
 | registry_url    |  R  | url to docker image repository where built experiment images will be published (shall be available also from cluster level)              | https://gcr.io     |
-| resources       |  O  | defines resource limits for every experiment (by default no resource limits) | cpu=4 tpu=1 mem=8G |
+| resources       |  O  | defines resource limits for every experiment (by default no resource limits) | {cpu: 4, tpu: 1, mem: 8G} |
 | neptune         |  O  | enable/disable neptune (by default enabled)      | true               |
 | google_project_id | O | if using GKE set this key with google project id | rl-sandbox-1234    |
 | default_pvc_size  | O | size of storage created for new project (see [persistent volumes](#persistent-volumes) section; by default creates volume of size `KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE`) | 100G |

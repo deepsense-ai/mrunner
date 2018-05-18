@@ -8,6 +8,8 @@ import yaml
 
 from mrunner.utils import make_attr_class
 
+AVAILABLE_RESOURCES = ['cpu', 'mem', 'gpu', 'tpu']
+
 Config = make_attr_class('Config', [
     ('contexts', dict(default={})),
     ('current_context', dict(default='')),
@@ -58,18 +60,23 @@ def context(ctx):
 @click.option('--backend_type', required=True,
               type=click.Choice(['kubernetes', 'slurm']), help='Type of backend')
 @click.option('--storage', default=None, help='Storage path to which neptune will copy source code')
-@click.option('--resource', default=None, multiple=True,
-              help='Resource to request (ex. mem=2G; available types: cpu|mem|gpu|tpu)')
+@click.option('--resources', default=None,
+              help='Resource to request (ex. "mem=2G cpu=4"; available types: {})'.format(
+                  ', '.join(AVAILABLE_RESOURCES)))
 @click.option('--registry_url', default=None, help='URL to docker container\'s registry')
 @click.option('--neptune/--no-neptune', default=True, help='Use neptune')
 @click.pass_context
-def context_add(ctx, name, backend_type, storage, resource, registry_url, neptune):
+def context_add(ctx, name, backend_type, storage, resources, registry_url, neptune):
     """Add new context"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
+    resources = dict([r.split('=') for r in resources.split(' ')])
+    if set(resources) - set(AVAILABLE_RESOURCES):
+        unknown_resources = set(resources) - set(AVAILABLE_RESOURCES)
+        raise click.ClickException('Unknown resource type: {}'.format(','.join(unknown_resources)))
     context = {'context_name': name, 'backend_type': backend_type, 'neptune': neptune, 'storage_dir': storage,
-               'registry_url': registry_url, 'resources': dict([r.split('=') for r in resource])}
+               'registry_url': registry_url, 'resources': resources}
     context = {k: v for k, v in context.items() if v}
     try:
         if name in config.contexts:
