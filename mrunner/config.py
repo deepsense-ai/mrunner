@@ -44,7 +44,7 @@ class ConfigParser(object):
 @click.group(invoke_without_command=True)
 @click.pass_context
 def context(ctx):
-    """manage remote context's"""
+    """Manage remote context's"""
     if not ctx.invoked_subcommand:
         config = ctx.obj['config']
         for context_name in config.contexts:
@@ -54,17 +54,17 @@ def context(ctx):
 
 
 @context.command(name='add')
-@click.option('--name', required=True, help='remote context name')
+@click.option('--name', required=True, help='Remote context name')
 @click.option('--backend_type', required=True,
-              type=click.Choice(['kubernetes', 'slurm']), help='type of backend')
-@click.option('--storage', default=None, help='storage path to which neptune will copy source code')
+              type=click.Choice(['kubernetes', 'slurm']), help='Type of backend')
+@click.option('--storage', default=None, help='Storage path to which neptune will copy source code')
 @click.option('--resource', default=None, multiple=True,
-              help='resource to request (ex. mem=2G; available types: cpu|mem|gpu|tpu)')
-@click.option('--registry_url', default=None, help='url to docker container\'s registry')
-@click.option('--neptune/--no-neptune', default=True, help='use neptune')
+              help='Resource to request (ex. mem=2G; available types: cpu|mem|gpu|tpu)')
+@click.option('--registry_url', default=None, help='URL to docker container\'s registry')
+@click.option('--neptune/--no-neptune', default=True, help='Use neptune')
 @click.pass_context
 def context_add(ctx, name, backend_type, storage, resource, registry_url, neptune):
-    """add new context"""
+    """Add new context"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
@@ -86,7 +86,7 @@ def context_add(ctx, name, backend_type, storage, resource, registry_url, neptun
 @click.argument('name')
 @click.pass_context
 def context_edit(ctx, name):
-    """edit context"""
+    """Edit context"""
     from six import StringIO
 
     config = ctx.obj['config']
@@ -122,7 +122,7 @@ def context_edit(ctx, name):
 @click.argument("name")
 @click.pass_context
 def context_delete(ctx, name):
-    """delete context"""
+    """Delete context"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
@@ -141,7 +141,7 @@ def context_delete(ctx, name):
 @click.argument("name")
 @click.pass_context
 def context_set_active(ctx, name):
-    """delete context"""
+    """Set context as active"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
@@ -159,7 +159,7 @@ def context_set_active(ctx, name):
 @click.argument("dst")
 @click.pass_context
 def context_copy(ctx, src, dst):
-    """delete context"""
+    """Make copy of context"""
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 

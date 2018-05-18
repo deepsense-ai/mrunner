@@ -26,7 +26,7 @@ def get_default_config_path(ctx):
 @click.group()
 @click.option('--debug/--no-debug', default=False, help='Enable debug messages')
 @click.option('--config', default=None, type=click.Path(dir_okay=False),
-              help='Path to mrunner configuration')
+              help='Path to mrunner yaml configuration')
 @click.option('--context', default=None, help='Name of remote context to use '
                                               '(if not provided, "contexts.current" conf key will be used)')
 @click.pass_context
