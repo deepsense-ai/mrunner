@@ -201,8 +201,8 @@ class SlurmBackend(object):
             # archive all files
             with tarfile.open(temp_file.name, 'w:gz') as tar_file:
                 for p in paths_to_dump:
+                    LOGGER.debug('Adding "{}" to deployment archive'.format(p.rel_remote_path))
                     tar_file.add(p.local_path, arcname=p.rel_remote_path)
-                    LOGGER.debug('Added "{}" to deployment archive'.format(p.rel_remote_path))
 
             # upload archive to cluster and extract
             self._put(temp_file.name, experiment.experiment_scratch_dir)
