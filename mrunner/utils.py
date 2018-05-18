@@ -73,11 +73,13 @@ def get_paths_to_copy(paths_to_copy=None, exclude=None):
             p = p.abspath()
             excluded = False
             for e in exclude:
-                if e.startswith(p):
+                e = e.abspath()
+                if not e.relpath(p).startswith('..'):
                     excluded = True
                     # if excluded subdir - not whole current
-                    if not e.samefile(p):
+                    if e != p:
                         directories += _list_dir(p)
+                    break
             if not excluded:
                 directories.append(PathToDump(p.relpath('.'), p.relpath('.')))
         return directories
