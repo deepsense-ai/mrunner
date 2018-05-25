@@ -15,6 +15,7 @@
   - [Kubernetes tools cheat sheet](#kubernetes-tools-cheat-sheet)
 - [neptune support](#neptune-support)
   - [neptune configuration](#neptune-configuration)
+  - [neptune tags](#neptune-tags)
   - [Issues with neptune](#issues-with-neptune)
 - [dos and don'ts](#dos-and-don'ts)
 - [Other commands (deprecated)](#other-commands-(deprecated))
@@ -157,6 +158,7 @@ Sample command call:
 
 ```commandline
 mrunner run --config neptune.yaml \
+            --tags "grid_search_k-12-48" --tags new_data \
             --requirements requirements.txt  \
             --base_image python:3 experiment1.py -- --param1 1
 ```
@@ -280,6 +282,7 @@ Sample command call:
 
 ```commandline
 mrunner run --config neptune.yaml \
+            --tags "grid_search_k-12-48" --tags new_data \
             --requirements requirements.txt  \
             --base_image python:3 experiment1.py -- --param1 1
 ```
@@ -414,6 +417,20 @@ Required connection parameters are passed during remote exectution using env var
 
 `neptune-cli==2` can store authrization token in `~/.neptune_tokens` but using them
 is not supported by mrunner.
+
+### neptune tags
+
+Experiment related neptune tags may be set in 3 places:
+- fixed tags shall be placed in `neptune.yaml` file as `tags` key
+- fixed tags may be also placed in context  as `tags` key
+- run related tags may be addtionally added with CLI `--tags` parameter
+
+```commandline
+mrunner run --config neptune.yaml \
+            --tags "grid_search_k-12-48" --tags new_data \
+            --requirements requirements.txt  \
+            --base_image python:3 experiment1.py -- --param1 1
+```
 
 ### Issues with neptune
 
