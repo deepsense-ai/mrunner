@@ -6,7 +6,7 @@ import six
 import yaml
 
 from mrunner.cmd import Cmd
-from mrunner.neptune import NeptuneWrapperCmd
+from mrunner.utils.neptune import NeptuneWrapperCmd
 
 
 class NeptuneWrapperCmdTestCase(unittest.TestCase):

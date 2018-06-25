@@ -6,7 +6,7 @@ import click
 import six
 import yaml
 
-from mrunner.utils import make_attr_class
+from mrunner.utils.utils import make_attr_class
 
 AVAILABLE_RESOURCES = ['cpu', 'mem', 'gpu', 'tpu']
 

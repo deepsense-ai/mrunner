@@ -5,9 +5,9 @@ import re
 import attr
 from kubernetes import client, config
 
-from mrunner.docker_engine import DockerEngine
+from mrunner.utils.docker_engine import DockerEngine
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
-from mrunner.utils import make_attr_class, filter_only_attr
+from mrunner.utils.utils import make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class Job(client.V1Job):
     RESOURCE_NAME_MAP = {'cpu': 'cpu', 'mem': 'memory', 'gpu': 'nvidia.com/gpu', 'tpu': 'cloud-tpus.google.com/v2'}
 
     def __init__(self, image, experiment):
-        from mrunner.namesgenerator import get_random_name
+        from mrunner.utils.namesgenerator import get_random_name
 
         experiment_name = re.sub(r'[ ,.\-_:;]+', '-', experiment.name)
         name = '{}-{}'.format(experiment_name, get_random_name('-'))

@@ -3,9 +3,9 @@ import unittest
 
 from path import Path
 
-from mrunner.config import Context
+from mrunner.cli.config import Context
 from mrunner.experiment import Experiment
-from mrunner.utils import GeneratedTemplateFile, DObject
+from mrunner.utils.utils import GeneratedTemplateFile, DObject
 
 
 class GeneratedTemplatesTestCase(unittest.TestCase):

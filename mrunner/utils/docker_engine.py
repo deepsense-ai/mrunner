@@ -6,7 +6,7 @@ import attr
 from docker.errors import ImageNotFound
 from path import Path
 
-from mrunner.utils import GeneratedTemplateFile
+from mrunner.utils.utils import GeneratedTemplateFile
 
 
 class RequirementsFile(object):

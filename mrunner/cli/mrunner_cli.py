@@ -7,10 +7,10 @@ import re
 import click
 from path import Path
 
-from mrunner.config import ConfigParser, context as context_cli
-from mrunner.k8s import KubernetesBackend
-from mrunner.neptune import load_neptune_config, NeptuneWrapperCmd
-from mrunner.slurm import SlurmBackend
+from mrunner.cli.config import ConfigParser, context as context_cli
+from mrunner.backends.k8s import KubernetesBackend
+from mrunner.utils.neptune import load_neptune_config, NeptuneWrapperCmd
+from mrunner.backends.slurm import SlurmBackend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def get_default_config_path(ctx):
                                               '(if not provided, "contexts.current" conf key will be used)')
 @click.pass_context
 def cli(ctx, debug, config, context):
-    """Deploy experiments on kubernetes cluster"""
+    """Deploy experiments on computation cluster"""
 
     log_tags_to_suppress = ['pykwalify', 'docker', 'kubernetes', 'paramiko', 'requests.packages']
     logging.basicConfig(level=debug and logging.DEBUG or logging.INFO)

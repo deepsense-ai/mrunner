@@ -6,7 +6,7 @@ import attr
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from path import Path
 
-from mrunner.namesgenerator import id_generator
+from mrunner.utils.namesgenerator import id_generator
 
 
 def get_experiment_dirname():
