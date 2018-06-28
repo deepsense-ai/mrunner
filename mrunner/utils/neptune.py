@@ -1,14 +1,88 @@
 # -*- coding: utf-8 -*-
+import logging
+from collections import namedtuple
 from copy import copy
 
 import six
+
+LOGGER = logging.getLogger(__name__)
+
+
+class NeptuneConfigFileBase(object):
+    # set of attributes is force by neptune v1 yaml format
+
+    class Parameter(namedtuple('Parameter', 'name type default required')):
+
+        @staticmethod
+        def create(name, value):
+            if isinstance(value, bool):
+                type = 'boolean'
+            elif isinstance(value, int):
+                type = 'int'
+            elif isinstance(value, float):
+                type = 'double'
+            else:
+                type = 'string'
+                value = str(value)
+            return NeptuneConfigFileBase.Parameter(name, type, value, False)
+
+    def __init__(self, project, name, parameters, tags=None, description=None, **kwargs):
+        self._project = project
+        self._name = name
+        self._parameters = [self.Parameter.create(k, v) for k, v in parameters.items()]
+        self._description = description
+        self._tags = tags
+
+    def dump(self, fh):
+        import yaml
+        yaml.dump(self._format_data(), fh, default_flow_style=False)
+
+    def _format_data(self):
+        raise NotImplementedError()
+
+
+class NeptuneConfigFileV1(NeptuneConfigFileBase):
+    # see http://neptune-docs.deepsense.codilime.com/versions/1.6/reference-guides/cli.html#configuration-files
+    def _format_data(self):
+        def format_parameter(p):
+            return dict(p._asdict())
+
+        data = {
+            'name': self._name,
+            'project': self._project,
+            'parameters': [format_parameter(p) for p in self._parameters]
+        }
+        if self._description:
+            data['description'] = self._description
+        if self._tags:
+            data['tags'] = self._tags
+        return data
+
+
+class NeptuneConfigFileV2(NeptuneConfigFileBase):
+    # see: https://docs.neptune.ml/cli/config/
+    def _format_data(self):
+        def format_parameter(p):
+            return p.default
+
+        data = {
+            'open-webbrowser': False,
+            'name': self._name,
+            'project': self._project,
+            'parameters': {p.name: format_parameter(p) for p in self._parameters}
+        }
+        if self._description:
+            data['description'] = self._description
+        if self._tags:
+            data['tags'] = self._tags
+        return data
 
 
 def load_neptune_config(neptune_config_path):
     from deepsense.neptune.common.config import neptune_config
 
     global_config = neptune_config.load_global_config()
-    local_config = neptune_config.load_local_config(neptune_config_path)
+    local_config = neptune_config.load_local_config(neptune_config_path) if neptune_config_path else {}
     neptune_config = neptune_config.NeptuneConfig(global_config=global_config, local_config=local_config)
 
     if len(neptune_config.name) > 16:
@@ -47,7 +121,7 @@ class NeptuneWrapperCmd(object):
         while cmd[0].startswith('python'):
             cmd = cmd[1:]
 
-        base_argv = ['neptune', 'run', cmd[0], '--config', self._experiment_config_path]
+        base_argv = ['neptune', 'run', cmd[0], '--config', str(self._experiment_config_path)]
         tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
         dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
         storage_arv = ['--storage', self._storage] if self._storage else []

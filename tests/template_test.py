@@ -15,7 +15,6 @@ class GeneratedTemplatesTestCase(unittest.TestCase):
         experiment = Experiment(base_image='python:3',
                                 paths_to_copy=['.', 'src', 'tests'],
                                 cmd=DObject(command='neptune run foo.py --storage /storage -- --epochs 2', env={}))
-        print('xxx', experiment.cmd_without_params)
         dockerfile = GeneratedTemplateFile(template_filename='Dockerfile.jinja2',
                                            context=context, experiment=experiment, requirements_file='requirements.txt')
         dockerfile_payload = Path(dockerfile.path).text(encoding='utf-8')

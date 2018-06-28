@@ -4,9 +4,10 @@ import unittest
 
 import six
 import yaml
+from path import tempdir
 
 from mrunner.cmd import Cmd
-from mrunner.utils.neptune import NeptuneWrapperCmd
+from mrunner.utils.neptune import NeptuneWrapperCmd, NeptuneConfigFileV1, load_neptune_config, NeptuneConfigFileV2
 
 
 class NeptuneWrapperCmdTestCase(unittest.TestCase):
@@ -40,3 +41,51 @@ class NeptuneWrapperCmdTestCase(unittest.TestCase):
             self.assertTrue(not vars_with_no_str_values)
             self.assertNotIn('NEPTUNE_PASSWORD', cmd.env)
             self.assertNotIn('NEPTUNE_USER', cmd.env)
+
+
+class NeptuneConfigFileTestCase(unittest.TestCase):
+    CONFIG_ORIG = {
+        'project': 'project',
+        'name': 'name',
+        'parameters': {'param1': 'param1', 'param2': 2, 'param3': True, 'param4': 1.2},
+        'tags': ['tag1', 'tag2', 'tag3']
+    }
+
+    def test_generate_v1(self):
+        from deepsense.version import __version__
+        version = int(__version__.split('.')[0])
+        if version == 1:
+            # test only if neptune-cli==1 is installed
+            with tempdir() as d:
+                temp_path = d / 'neptune.yaml'
+                with temp_path.open('w') as fh:
+                    NeptuneConfigFileV1(**self.CONFIG_ORIG).dump(fh)
+                config_read = load_neptune_config(temp_path)
+            # trim to keys from config_orig
+            config_trimmed = {k: v for k, v in config_read.items() if k in self.CONFIG_ORIG}
+
+            # convert from v1 parameters list to dict
+            config_trimmed['parameters'] = {d['name']: d['default'] for d in config_trimmed['parameters']}
+            config_trimmed['tags'] = sorted(config_trimmed['tags'])  # not sure why order of tags is not preserved
+
+            self.assertEqual(self.CONFIG_ORIG, config_trimmed)
+
+    def test_generate_v2(self):
+        from deepsense.version import __version__
+        version = int(__version__.split('.')[0])
+        if version == 2:
+            # test only if neptune-cli==2 is installed
+            with tempdir() as d:
+                temp_path = d / 'neptune.yaml'
+                with temp_path.open('w') as fh:
+                    NeptuneConfigFileV2(**self.CONFIG_ORIG).dump(fh)
+                config_read = load_neptune_config(temp_path)
+            # trim to keys from config_orig
+            config_trimmed = {k: v for k, v in config_read.items() if k in self.CONFIG_ORIG}
+            self.assertEqual(self.CONFIG_ORIG, config_trimmed)
+
+    def test_generate_extended_args(self):
+        config_orig = self.CONFIG_ORIG.copy()
+        config_orig['foo'] = 1
+        config_orig['bar'] = 2
+        config = NeptuneConfigFileV1(**config_orig)

@@ -1,4 +1,5 @@
 import datetime
+import logging
 from collections import namedtuple, OrderedDict
 from tempfile import NamedTemporaryFile
 
@@ -7,6 +8,8 @@ from jinja2 import Environment, PackageLoader, StrictUndefined
 from path import Path
 
 from mrunner.utils.namesgenerator import id_generator
+
+LOGGER = logging.getLogger(__name__)
 
 
 def get_experiment_dirname():
@@ -64,7 +67,7 @@ def get_paths_to_copy(paths_to_copy=None, exclude=None):
     if paths_to_copy is None:
         paths_to_copy = []
     if exclude is None:
-        exclude = []
+        exclude = ['.git', '.gitignore', '.gitmodules']
     exclude = [Path(e).abspath() for e in exclude]
 
     def _list_dir(d):
@@ -93,6 +96,11 @@ def get_paths_to_copy(paths_to_copy=None, exclude=None):
             # get relative to cwd split into items on each '/' and remove relative parts
             rel_dst = '/'.join([item for item in Path(external).relpath('.').splitall() if item and item != '..'])
         result.append(PathToDump(Path(src).relpath('.'), Path(rel_dst).relpath('.')))
+
+    result = set(result)
+    LOGGER.debug('get_paths_to_copy(paths_to_copy={}, exclude={}) result={}'.format(
+        paths_to_copy, exclude, [str(s) for s, d in result]
+    ))
     return result
 
 
@@ -103,4 +111,8 @@ def make_attr_class(class_name, fields, **class_kwargs):
 
 def filter_only_attr(AttrClass, d):
     available_fields = [f.name for f in attr.fields(AttrClass)]
+    for k, v in d.items():
+        if k in available_fields:
+            continue
+        LOGGER.debug('Ignoring argument {}={}'.format(k, v))
     return {k: v for k, v in d.items() if k in available_fields}
