@@ -107,7 +107,7 @@ class SlurmWrappersCmd(object):
         def _extend_cmd_items(cmd_items, option, data_key, default=None):
             value = self._getattr(data_key)
             if value:
-                cmd_items += [option, value]
+                cmd_items += [option, str(value)]
             elif default:
                 cmd_items += [option, default]
 

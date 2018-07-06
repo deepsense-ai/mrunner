@@ -98,7 +98,9 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
 
     spec_fun = get_experiments_spec_handle(script, spec)
     for experiment in spec_fun():
-        if not hasattr(experiment, 'to_dict'):
+        if isinstance(experiment, dict):
+            experiment = NeptuneExperiment(**experiment)
+        elif not hasattr(experiment, 'to_dict'):
             experiment = NeptuneExperiment(**experiment.__dict__)
         cli_params = experiment.to_dict()
 
