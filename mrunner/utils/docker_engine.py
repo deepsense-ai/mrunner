@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 from subprocess import call
 
@@ -7,6 +8,8 @@ from docker.errors import ImageNotFound
 from path import Path
 
 from mrunner.utils.utils import GeneratedTemplateFile
+
+LOGGER = logging.getLogger(__name__)
 
 
 class RequirementsFile(object):
@@ -74,9 +77,13 @@ class DockerEngine(object):
 
         # requirements filename shall be constant for experiment, to use docker cache during build;
         # thus we don't use dynamic/temporary file names
-        requirements = RequirementsFile(self._generate_requirements_name(experiment), experiment.requirements)
+        file_path = self._generate_requirements_name(experiment)
+        requirements = RequirementsFile(file_path, experiment.requirements)
+        LOGGER.debug('Requirements file created:')
+        LOGGER.debug(Path(file_path).text())
 
         dockerfile = DockerFile(experiment=experiment, requirements_file=requirements.path)
+        LOGGER.debug('Dockerfile created:')
         dockerfile_rel_path = Path(experiment.cwd).relpathto(dockerfile.path)
 
         # obtain old image for comparison if there where any changes
@@ -87,21 +94,28 @@ class DockerEngine(object):
             old_image = None
 
         # build image; use cache if possible
+        LOGGER.debug(Path(dockerfile.path).text())
+        LOGGER.debug('Building docker image')
         image, _ = self._client.images.build(path=experiment.cwd, tag=repository_name,
                                              dockerfile=dockerfile_rel_path, pull=True, rm=True, forcerm=True)
 
         is_image_updated = not old_image or old_image.id != image.id
+        LOGGER.debug('Docker image built (updated={})'.format(is_image_updated))
         if is_image_updated:
             # if new image is generated - tag it and push to repository
             tag = self._get_tag()
             image.tag(repository_name, tag=tag)
+            LOGGER.debug('Docker image tagged: {}'.format(tag))
             result = self._client.images.push(repository_name, tag=tag)
+            LOGGER.debug('Docker image published: {}'.format(tag))
             if 'errorDetail' in result:
                 raise RuntimeError(result)
             image = self._client.images.get(repository_name)
 
         # obtain image name with our tag
-        return [tag for tag in image.tags if not tag.endswith('latest')][0]
+        image_name = [tag for tag in image.tags if not tag.endswith('latest')][0]
+        LOGGER.debug('Docker image {} ready'.format(image_name))
+        return image_name
 
     def _generate_requirements_name(self, experiment):
         return 'requirements_{}_{}.txt'.format(experiment.project, experiment.name)

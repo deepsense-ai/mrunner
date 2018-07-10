@@ -71,7 +71,7 @@ def context_add(ctx, name, backend_type, storage, resources, registry_url, neptu
     config = ctx.obj['config']
     config_path = ctx.obj['config_path']
 
-    resources = dict([r.split('=') for r in resources.split(' ')])
+    resources = dict([r.split('=') for r in resources.split(' ')]) if resources else {}
     if set(resources) - set(AVAILABLE_RESOURCES):
         unknown_resources = set(resources) - set(AVAILABLE_RESOURCES)
         raise click.ClickException('Unknown resource type: {}'.format(','.join(unknown_resources)))

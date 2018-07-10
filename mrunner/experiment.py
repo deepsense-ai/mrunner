@@ -94,6 +94,7 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
             neptune_path = neptune_dir / 'neptune-{}-{}.yaml'.format(get_random_name(), id_generator(4))
         with neptune_path.open('w') as neptune_file:
             NeptuneConfigFile(**cli_params).dump(neptune_file)
+        LOGGER.debug('Generated neptune file {}: {}'.format(neptune_path, Path(neptune_path).text()))
         return neptune_path
 
     spec_fun = get_experiments_spec_handle(script, spec)
