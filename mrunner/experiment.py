@@ -5,6 +5,7 @@ import re
 import warnings
 
 import attr
+import six
 from path import Path
 
 from mrunner.utils.namesgenerator import id_generator, get_random_name
@@ -28,6 +29,29 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('resources', dict(default=attr.Factory(dict), type=dict)),
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
 ]
+
+
+class Experiment(object):
+
+    def __init__(self, project, name, script, parameters, **kwargs):
+        def _get_arg(k, sep=' '):
+            list_type = ['tags', 'paths-to-copy', 'exclude', 'properties', 'python_path']
+            v = kwargs.pop(k, [] if k in list_type else '')
+            return v.split(sep) if isinstance(v, six.string_types) and k in list_type else v
+
+        self.script = script
+        self.project = project
+        self.name = name[:16]
+        self.parameters = parameters
+
+        self.env = kwargs.pop('env', {})
+        self.env['PYTHONPATH'] = ':'.join(['$PYTHONPATH', ] + _get_arg('python_path', sep=':'))
+
+        for k in list(kwargs.keys()):
+            self.__setattr__(k, _get_arg(k))
+
+    def to_dict(self):
+        return self.__dict__
 
 
 class NeptuneExperiment(object):
