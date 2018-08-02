@@ -3,13 +3,15 @@ import logging
 import random
 import re
 import warnings
+from distutils.version import LooseVersion
 
 import attr
 import six
+from deepsense import version
 from path import Path
 
 from mrunner.utils.namesgenerator import id_generator, get_random_name
-from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config
+from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,16 +103,17 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
     LOGGER.info('Found {} function in {}; will use it as experiments configuration generator'.format(spec, script))
     neptune_support = bool(neptune_dir)
     if neptune_support:
-        from deepsense.version import __version__
-        neptune_major_version = __version__.split('.')[0]
+
         if neptune_version is None:
-            neptune_version = neptune_major_version
-        elif neptune_version != neptune_major_version:
+            neptune_version = version.__version__
+        neptune_version = LooseVersion(neptune_version)
+
+        if NEPTUNE_LOCAL_VERSION < neptune_version:
             # this shall match because we'll later use local neptune to parse them
             raise RuntimeError('Current neptune major version: {}, doesn\'t match forced one: {}'.format(
-                neptune_major_version, neptune_version
+                NEPTUNE_LOCAL_VERSION, neptune_version
             ))
-        NeptuneConfigFile = {'1': NeptuneConfigFileV1, '2': NeptuneConfigFileV2}[str(neptune_version)]
+        NeptuneConfigFile = {'1': NeptuneConfigFileV1, '2': NeptuneConfigFileV2}[str(NEPTUNE_LOCAL_VERSION.version[0])]
 
     def _dump_to_neptune(cli_params, neptune_dir):
         neptune_path = None

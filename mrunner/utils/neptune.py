@@ -2,10 +2,14 @@
 import logging
 from collections import namedtuple
 from copy import copy
+from distutils.version import LooseVersion
 
 import six
+from deepsense import version
 
 LOGGER = logging.getLogger(__name__)
+
+NEPTUNE_LOCAL_VERSION = LooseVersion(version.__version__)
 
 
 class NeptuneConfigFileBase(object):
@@ -121,29 +125,42 @@ class NeptuneWrapperCmd(object):
         while cmd[0].startswith('python'):
             cmd = cmd[1:]
 
-        base_argv = ['neptune', 'run', cmd[0], '--config', str(self._experiment_config_path)]
-        tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
-        dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
-        storage_arv = ['--storage', self._storage] if self._storage else []
+        base_argv = ['neptune', 'run', '--config', str(self._experiment_config_path)]
+        if NEPTUNE_LOCAL_VERSION.version[0] == 1:
+            storage_arv = ['--storage', self._storage] if self._storage else []
+            tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
+            # for v2 it is exclude param
+            dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
+            cmd = [cmd[0], '--'] + cmd[1:]
+        else:
+            storage_arv = []
+            tags_argv = []
+            for tag in self._additional_tags:
+                tags_argv.extend(['--tag', tag])
+            dump_argv = []
         docker_argv = ['--docker-image', self._docker_image] if self._docker_image else []
 
-        cmd = base_argv + storage_arv + tags_argv + dump_argv + docker_argv + ['--'] + cmd[1:]
+        cmd = base_argv + storage_arv + tags_argv + dump_argv + docker_argv + cmd
         return ' '.join(cmd)
 
     @property
     def env(self):
+        # setup env variables to setup neptune config
+        neptune_env = {}
+        if NEPTUNE_LOCAL_VERSION.version[0] == 1:
+            # neptune connection config is required because experiments from different neptune accounts may be
+            # started on same system account
+            config = self.conf
+            assert config['username'], "Use ~/.neptune.yaml to setup credentials"
+            assert config['password'], "Use ~/.neptune.yaml to setup credentials"
 
-        # neptune connection config is required because experiments from different neptune accounts may be
-        # started on same system account
-        config = self.conf
-        assert config['username'], "Use ~/.neptune.yaml to setup credentials"
-        assert config['password'], "Use ~/.neptune.yaml to setup credentials"
-
-        neptune_env = {'NEPTUNE_PASSWORD': str(config['password']), 'NEPTUNE_USER': str(config['username'])}
-        if 'host' in config:
-            neptune_env['NEPTUNE_HOST'] = str(config['host'])
-        if 'port' in config:
-            neptune_env['NEPTUNE_PORT'] = str(config['port'])
+            neptune_env = {'NEPTUNE_PASSWORD': str(config['password']), 'NEPTUNE_USER': str(config['username'])}
+            if 'host' in config:
+                neptune_env['NEPTUNE_HOST'] = str(config['host'])
+            if 'port' in config:
+                neptune_env['NEPTUNE_PORT'] = str(config['port'])
+        elif NEPTUNE_LOCAL_VERSION.version[0] == 2:
+            neptune_env['HOME'] = '$(pwd)'  # neptune loads token from ~/.neptune_tokens/token
 
         # TODO: [PZ] because neptune env vars are set, maybe it is not required to set additional env var?
         neptune_env.update({'MRUNNER_UNDER_NEPTUNE': '1'})
