@@ -6,7 +6,7 @@ import re
 
 import sys
 
-from mrunner.utils import parse_argv
+from mrunner.utils.utils import parse_argv
 
 # NOTE(maciek): Code is copied from jobman: https://github.com/crmne/jobman
 def generate_combination(repl):

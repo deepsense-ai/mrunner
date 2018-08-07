@@ -5,9 +5,9 @@ import re
 import attr
 from kubernetes import client, config
 
-from mrunner.docker_engine import DockerEngine
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
-from mrunner.utils import make_attr_class, filter_only_attr
+from mrunner.utils.docker_engine import DockerEngine
+from mrunner.utils.utils import make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
 
@@ -17,13 +17,17 @@ def _generate_project_namespace(args):
 
 
 def _extract_cmd_without_params(args):
-    cmd = args.cmd.command.split(' -- ')[0] + ' --' if args.cmd else ''
+    cmd = args.cmd.command
+    if args.cmd and ' -- ' in args.cmd.command:
+        cmd = args.cmd.command.split(' -- ')[0] + ' --'
     return cmd.split(' ')
 
 
 def _extract_params(args):
-    cmd = args.cmd.command.split(' -- ')[1] if args.cmd else ''
-    return cmd.split(' ')
+    cmd = ''
+    if args.cmd and ' -- ' in args.cmd.command:
+        cmd = args.cmd.command.split(' -- ')[1].strip()
+    return cmd.split(' ') if cmd else []
 
 
 EXPERIMENT_MANDATORY_FIELDS = [
@@ -50,7 +54,7 @@ class Job(client.V1Job):
     RESOURCE_NAME_MAP = {'cpu': 'cpu', 'mem': 'memory', 'gpu': 'nvidia.com/gpu', 'tpu': 'cloud-tpus.google.com/v2'}
 
     def __init__(self, image, experiment):
-        from mrunner.namesgenerator import get_random_name
+        from mrunner.utils.namesgenerator import get_random_name
 
         experiment_name = re.sub(r'[ ,.\-_:;]+', '-', experiment.name)
         name = '{}-{}'.format(experiment_name, get_random_name('-'))
@@ -183,7 +187,6 @@ class KubernetesBackend(object):
         self.apps_api = client.AppsV1Api()
 
     def run(self, experiment):
-
         experiment = ExperimentRunOnKubernetes(**filter_only_attr(ExperimentRunOnKubernetes, experiment))
         image = DockerEngine().build_and_publish_image(experiment=experiment)
 

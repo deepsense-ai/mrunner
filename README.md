@@ -79,7 +79,7 @@ To manage contexts use `context` command. Example calls:
 
 ```commandline
 mrunner context
-mrunner context add --name gke.sandbox --type kubernetes \
+mrunner context add --name gke.sandbox --backend_type kubernetes \
                     --registry_url https://gcr.io --storage /storage
                     --resources "tpu=1 cpu=4"
 mrunner context edit gke.sandbox               # opens editor with context parameters
@@ -104,8 +104,10 @@ storage: /storage
 
 ## slurm
 
-### Setup slurm
+Read [presentation](http://www2.chemia.uj.edu.pl/cttc7/plgworkshop/2016.09.08.cttc7.plgrid.workshop.pdf)
+from PLGrid Workshop to gain knowledge on slurm and PLGrid clusters.
 
+### Setup slurm 
 
 ### remote context keys for slurm
 

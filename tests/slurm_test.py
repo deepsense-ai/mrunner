@@ -11,8 +11,8 @@ from fabric.state import env
 from paramiko import Agent
 from path import Path
 
-from mrunner.config import Context
-from mrunner.slurm import SlurmBackend, ExperimentScript, ExperimentRunOnSlurm
+from mrunner.cli.config import Context
+from mrunner.backends.slurm import SlurmBackend, ExperimentScript, ExperimentRunOnSlurm
 
 
 class TmpCmd(object):
