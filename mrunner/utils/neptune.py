@@ -36,6 +36,7 @@ class NeptuneConfigFileBase(object):
         self._parameters = [self.Parameter.create(k, v) for k, v in parameters.items()]
         self._description = description
         self._tags = tags
+        self._exclude = kwargs.get('exclude', [])
 
     def dump(self, fh):
         import yaml
@@ -60,6 +61,8 @@ class NeptuneConfigFileV1(NeptuneConfigFileBase):
             data['description'] = self._description
         if self._tags:
             data['tags'] = self._tags
+        if self._exclude:
+            data['exclude'] = self._exclude
         return data
 
 
@@ -79,6 +82,8 @@ class NeptuneConfigFileV2(NeptuneConfigFileBase):
             data['description'] = self._description
         if self._tags:
             data['tags'] = self._tags
+        if self._exclude:
+            data['exclude'] = self._exclude
         return data
 
 
