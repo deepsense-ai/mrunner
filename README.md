@@ -127,7 +127,6 @@ Possible remote context keys:
 | modules_to_load      |  O  | list of space separated additional slurm modules to load  | plgrid/tools/python/3.6.0 plgrid/tools/ffmpeg/3.2.2 |
 | after_module_load_ cmd | O | shell oneliner executed after slurm module load, before sourcing venv | export PATH=/net/people/plghenrykm/anaconda2/bin:$PATH; source activate opensim-rl-2.7 |
 | venv                 |  O  | path to virtual environment; can be overwritten by CLI `venv` option | '/net/people/plghenrykm/ppo_tpu/ppo_env |
-
 | time                 |  O  | Set a limit on the total run time of the job allocation. If the requested time limit exceeds the partition's time limit, the job will be left in a PENDING state (possibly indefinitely). (Used with `sbatch` flag) | 3600000 |
 | ntasks               |  O  | This option advises the slurm controller that job steps run within the allocation will launch a maximum of number tasks and to provide for sufficient resources. The default is one task per node, but note that the Slurm '--cpus-per-task' option will change this default.|
 
