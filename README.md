@@ -118,7 +118,7 @@ Possible remote context keys:
 | name                 |  R  | unique name of context which identifies him          | plgrid.plggluna.sandbox  |
 | type                 |  R  | shall equal `slurm`                                  | slurm              |
 | slurm_url            |  R  | username and address of slurm cluster                | chnorris@pro.cyfronet.pl    |
-| storage              |  R  | path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled; may use env variables) | /storage |
+| storage_dir              |  R  | path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled; may use env variables) | /storage |
 | partition            |  R  | request a specific slurm partition for the resource allocation | plgrid-testing     |
 | user_id              |  R  | any, meaningful user id used to identify owner of experiment | pz        |
 | scratch_dir          |  O  | subdirectories under $SCRATCH dir (default `mrunner`) | mrunner            |
