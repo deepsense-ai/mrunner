@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 cd {{ experiment.experiment_scratch_dir }}
-{%- for module_name in experiment.modules_to_load.split(" ") %}
+{%- for module_name in experiment.modules_to_load %}
 module load {{ module_name }}
 {%- endfor %}
 {%- if experiment.after_module_load_cmd %}
