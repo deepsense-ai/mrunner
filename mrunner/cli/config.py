@@ -113,7 +113,7 @@ def context_edit(ctx, name):
             if updated_context['context_name'] != context['context_name']:
                 del config.contexts[context['context_name']]
                 if config.current_context == context['context_name']:
-                    config.set('current_context', updated_context['context_name'])
+                    config.current_context = updated_context['context_name']
 
             config.contexts[updated_context['context_name']] = updated_context
         else:
