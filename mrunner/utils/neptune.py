@@ -5,11 +5,14 @@ from copy import copy
 from distutils.version import LooseVersion
 
 import six
-from deepsense import version
+try:
+    from deepsense import version as neptune_version
+except ImportError:
+    from neptune import version as neptune_version
 
 LOGGER = logging.getLogger(__name__)
 
-NEPTUNE_LOCAL_VERSION = LooseVersion(version.__version__)
+NEPTUNE_LOCAL_VERSION = LooseVersion(neptune_version.__version__)
 
 
 class NeptuneConfigFileBase(object):
