@@ -5,8 +5,8 @@ ARG STORAGE_DIR={{ experiment.storage_dir }}
 
 COPY {{ requirements_file }} ${EXP_DIR}/requirements.txt
 RUN pip install --no-cache-dir -r $EXP_DIR/requirements.txt
-{%- for path in experiment.paths_to_copy or ['.'] %}
-COPY {{ path }} ${EXP_DIR}/{{ path }}
+{%- for local_path, remote_path in paths_to_copy or ['.'] %}
+COPY {{ local_path }} ${EXP_DIR}/{{ remote_path }}
 {%-  endfor %}
 ENV STORAGE_DIR=${STORAGE_DIR}
 

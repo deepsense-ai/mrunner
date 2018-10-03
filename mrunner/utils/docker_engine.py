@@ -7,7 +7,7 @@ import attr
 from docker.errors import ImageNotFound
 from path import Path
 
-from mrunner.utils.utils import GeneratedTemplateFile
+from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,10 +39,12 @@ class DockerFile(GeneratedTemplateFile):
         # paths in command shall be relative
         cmd = experiment_data.pop('cmd')
         updated_cmd = self._rewrite_paths(experiment.cwd, cmd.command)
+        paths_to_copy = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)
         experiment = attr.evolve(experiment, cmd=StaticCmd(command=updated_cmd, env=cmd.env))
 
         super(DockerFile, self).__init__(template_filename=self.DEFAULT_DOCKERFILE_TEMPLATE,
-                                         experiment=experiment, requirements_file=requirements_file)
+                                         experiment=experiment, requirements_file=requirements_file,
+                                         paths_to_copy=paths_to_copy)
 
     def _rewrite_paths(self, cwd, cmd):
         updated_cmd = []
