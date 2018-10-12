@@ -70,7 +70,6 @@ class DockerEngine(object):
         call('gcloud auth configure-docker'.split(' '))
 
     def build_and_publish_image(self, experiment):
-
         registry_url = experiment.registry_url
         self._is_gcr = registry_url and registry_url.startswith('https://gcr.io')
         if registry_url:

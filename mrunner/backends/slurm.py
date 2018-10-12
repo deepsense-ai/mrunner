@@ -14,6 +14,7 @@ from path import Path
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
 from mrunner.plgrid import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
 from mrunner.utils.namesgenerator import id_generator
+from mrunner.utils.neptune import NEPTUNE_LOCAL_VERSION
 from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
@@ -75,6 +76,10 @@ class ExperimentScript(GeneratedTemplateFile):
         env = experiment.cmd.env.copy() if experiment.cmd else {}
         env.update(experiment.env)
         env = {k: str(v) for k, v in env.items()}
+
+        if NEPTUNE_LOCAL_VERSION.version[0] == 2:
+            env['HOME'] = '$(pwd)'  # neptune shall loads token local copy of .neptune_tokens|.neptune/tokens
+
         experiment = attr.evolve(experiment, env=env, experiment_scratch_dir=experiment.experiment_scratch_dir)
 
         super(ExperimentScript, self).__init__(template_filename=self.DEFAULT_SLURM_EXPERIMENT_SCRIPT_TEMPLATE,
