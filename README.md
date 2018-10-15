@@ -13,10 +13,7 @@
   - [Cluster namespaces](#cluster-namespaces)
   - [Persistent volumes](#persistent-volumes)
   - [Kubernetes tools cheat sheet](#kubernetes-tools-cheat-sheet)
-- [neptune support](#neptune-support)
-  - [neptune configuration](#neptune-configuration)
-  - [neptune tags](#neptune-tags)
-  - [Issues with neptune](#issues-with-neptune)
+- [neptune support](docs/neptune.md)
 - [dos and don'ts](#dos-and-don'ts)
 - [Other commands (deprecated)](#other-commands-(deprecated))
 
@@ -31,7 +28,7 @@ less configuration. Main features are:
 - run experiments
   - use of scheduler, based on mangement of available resources
 (if remote system supports it)
-- monitor experiments using [neptune](neptune-support)
+- monitor experiments using [neptune](docs/neptune)
 
 Currently [slurm](https://slurm.schedmd.com) and
 [kubernetes](http://kubernetes.io) clusters are supported.
@@ -339,7 +336,7 @@ kubectl config set-context $(kubectl config current-context) \
 To gather project data from different experiments in single place,
 it is required to create set of Persistent Volume related resources (see diagram below and [nfs example](https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs)). During execution of each experiment, it is checked for existance and correctness of this setup. The size of `pvc/storage`defines `default_pvc_size`key from mrunner context, but if not provided volume of size`KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE`(40GB) will be created.
 
-![k8s_storage](images/k8s_storage.png)
+![k8s_storage](docs/images/k8s_storage.png)
 
 By default volume is mounted under directory pointed by path from `$STORAGE_DIR` environment variable (the same as passed in `storage` key mrunner context).
 
@@ -390,74 +387,6 @@ To download data from presistent volume use:
 TBD
 ```
 
-## neptune support
-
-It is possible to run experiments with [neptune](http://neptune.ml).
-In fact support is enabled by default and to disable it,
-[set](configuration) `neptune` [remote context](#remote-context) config key to `false`.
-
-### neptune configuration
-
-mrunner reads neptune global configuration file (by default `~/.neptune.yaml`), the same
-which [neptune CLI](https://docs.neptune.ml/cli/neptune/) uses. Such configuration file
-can contain any of parameters keys, but most commonly we're using it to set
-neptune connection and authorization parameters. Example configuration:
-
-```yaml
-host: kdmi.neptune.deepsense.io
-port: 443
-username: user.name@codilime.com
-password: topsecret
-```
-
-More details how to configure it may be found in
-[v1.6](http://neptune-docs.deepsense.codilime.com/versions/1.6/reference-guides/cli.html) and
-[v2](https://docs.neptune.ml/config/intro/) documentations.
-
-Required connection parameters are passed during remote exectution using env variables.
-
-`neptune-cli==2` can store authrization token in `~/.neptune_tokens` but using them
-is not supported by mrunner.
-
-### neptune tags
-
-Experiment related neptune tags may be set in 3 places:
-- fixed tags shall be placed in `neptune.yaml` file as `tags` key
-- fixed tags may be also placed in context  as `tags` key
-- run related tags may be addtionally added with CLI `--tags` parameter
-
-```commandline
-mrunner run --config neptune.yaml \
-            --tags "grid_search_k-12-48" --tags new_data \
-            --requirements requirements.txt  \
-            --base_image python:3 experiment1.py -- --param1 1
-```
-
-### Issues with neptune
-
-#### kdmi server
-
-Currently for "high-frequency-training" it is recommended to use
-[kdmi.neptune.deepsense.io](https://kdmi.neptune.deepsense.io) server, which
-it is optimized to handle such load. The problem is, that it is v1.6 neptune server,
-and thus it requires `neptune-cli==1.6` (`neptune-cli==2` uses totally different server protocol;
-and `neptune-cli==1.7` shall not be used).
-
-If you don't plan to start a lot of experiments at once,
-you may use [public neptune.ml](https://neptune.ml) server, which
-shall work with most recent `neptune-cli` package.
-
-#### Issue with requirements
-
-(As on 10th Apr 18) there is issue with installation of other packages
-with neptune-cli.
-
-If put some packages with conflicting requirements, it is observed
-that older version of packages are installed.
-It potentially cause errors of packages which require some newer versions.
-
-Related neptune team [jira ticket](https://codilime.atlassian.net/browse/NPT-3427)
-
 ## dos and don'ts
 
 - while using [kubernetes](#kubernetes) you can easily clean-up unnecessary `jobs` and `pods` by running this command:
@@ -468,22 +397,6 @@ Related neptune team [jira ticket](https://codilime.atlassian.net/browse/NPT-342
 
   Do not delete `pvc`s or `namespace`'s unless you're sure you're want that,
   otherwise you may accidentally delete the storage used by somebody's else job.
-
-## Other commands (deprecated)
-
-### `local_cli` flags
-Set _F_ plus:
-
-* `--config CONFIG` : Path to experiment neptune config
-* `--docker_image DOCKER_IMAGE` : Docker image name to use while running experimentwithn eptune
-
-
-### `command_gen_cli` flags
-Only the following flags are applicable:
-
-* `--repeat REPEAT` : Repeat commands
-* `--shuffle` : Shuffle commands
-* `--limit LIMIT` : Limit number of commands
 
 ## TODO
 

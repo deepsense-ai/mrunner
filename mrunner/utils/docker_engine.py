@@ -7,7 +7,7 @@ import attr
 from docker.errors import ImageNotFound
 from path import Path
 
-from mrunner.utils.utils import GeneratedTemplateFile
+from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,10 +39,29 @@ class DockerFile(GeneratedTemplateFile):
         # paths in command shall be relative
         cmd = experiment_data.pop('cmd')
         updated_cmd = self._rewrite_paths(experiment.cwd, cmd.command)
+        paths_to_copy = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)
+        # FIXME: files could not be copied from outside of current directory; currently we make a local copy of it
+        paths_to_copy = self._copy_external_locally(paths_to_copy)
+
         experiment = attr.evolve(experiment, cmd=StaticCmd(command=updated_cmd, env=cmd.env))
 
         super(DockerFile, self).__init__(template_filename=self.DEFAULT_DOCKERFILE_TEMPLATE,
-                                         experiment=experiment, requirements_file=requirements_file)
+                                         experiment=experiment, requirements_file=requirements_file,
+                                         paths_to_copy=paths_to_copy)
+
+    def _copy_external_locally(self, paths_to_copy):
+        new_paths_to_copy = []
+        for local_path, remote_path in paths_to_copy:
+            if local_path.startswith('..'):
+                local_path = Path(local_path)
+                if local_path.isdir():
+                    local_path.copytree(remote_path)
+                else:
+                    Path(remote_path).parent.makedirs_p()
+                    local_path.copy(remote_path)
+                local_path = remote_path
+            new_paths_to_copy.append((local_path, remote_path))
+        return new_paths_to_copy
 
     def _rewrite_paths(self, cwd, cmd):
         updated_cmd = []
@@ -68,7 +87,6 @@ class DockerEngine(object):
         call('gcloud auth configure-docker'.split(' '))
 
     def build_and_publish_image(self, experiment):
-
         registry_url = experiment.registry_url
         self._is_gcr = registry_url and registry_url.startswith('https://gcr.io')
         if registry_url:

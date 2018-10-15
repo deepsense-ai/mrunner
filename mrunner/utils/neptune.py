@@ -5,11 +5,14 @@ from copy import copy
 from distutils.version import LooseVersion
 
 import six
-from deepsense import version
+try:
+    from deepsense import version as neptune_version
+except ImportError:
+    from neptune import version as neptune_version
 
 LOGGER = logging.getLogger(__name__)
 
-NEPTUNE_LOCAL_VERSION = LooseVersion(version.__version__)
+NEPTUNE_LOCAL_VERSION = LooseVersion(neptune_version.__version__)
 
 
 class NeptuneConfigFileBase(object):
@@ -164,8 +167,6 @@ class NeptuneWrapperCmd(object):
                 neptune_env['NEPTUNE_HOST'] = str(config['host'])
             if 'port' in config:
                 neptune_env['NEPTUNE_PORT'] = str(config['port'])
-        elif NEPTUNE_LOCAL_VERSION.version[0] == 2:
-            neptune_env['HOME'] = '$(pwd)'  # neptune loads token from ~/.neptune_tokens/token
 
         # TODO: [PZ] because neptune env vars are set, maybe it is not required to set additional env var?
         neptune_env.update({'MRUNNER_UNDER_NEPTUNE': '1'})
