@@ -7,7 +7,7 @@ less configuration. Main features are:
 - run experiments
   - use of scheduler, based on mangement of available resources
 (if remote system supports it)
-- monitor experiments using [neptune](neptune.ml)
+- monitor experiments using [neptune](https://neptune.ml)
 
 Currently [slurm](https://slurm.schedmd.com) and
 [kubernetes](http://kubernetes.io) clusters are supported.

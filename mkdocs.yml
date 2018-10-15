@@ -1,8 +1,10 @@
 site_name: mrunner
 pages:
+  - overview: index.md
   - setup: setup.md
   - neptune: neptune.md
   - slurm: slurm.md
   - kubernetes: kubernetes.md
   - tips: tips.md
+  - contribution: contribution.md
 theme: readthedocs
