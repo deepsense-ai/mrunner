@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>slurm - mrunner</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "slurm";
+    var mkdocs_page_input_path = "slurm.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> mrunner</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../setup/">setup</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../neptune/">neptune</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">slurm</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#setup-slurm">Setup slurm</a></li>
+    
+
+    <li class="toctree-l2"><a href="#remote-context-keys-for-slurm">remote context keys for slurm</a></li>
+    
+
+    <li class="toctree-l2"><a href="#plgrid">plgrid</a></li>
+    
+
+    <li class="toctree-l2"><a href="#run-experiment-on-slurm">Run experiment on slurm</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../kubernetes/">kubernetes</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../tips/">tips</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">mrunner</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>slurm</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>Read <a href="http://www2.chemia.uj.edu.pl/cttc7/plgworkshop/2016.09.08.cttc7.plgrid.workshop.pdf">presentation</a>
+from PLGrid Workshop to gain knowledge on slurm and PLGrid clusters.</p>
+<h3 id="setup-slurm">Setup slurm</h3>
+<h3 id="remote-context-keys-for-slurm">remote context keys for slurm</h3>
+<p>Possible remote context keys:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>req</th>
+<th>description</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>R</td>
+<td>unique name of context which identifies him</td>
+<td>plgrid.plggluna.sandbox</td>
+</tr>
+<tr>
+<td>type</td>
+<td>R</td>
+<td>shall equal <code>slurm</code></td>
+<td>slurm</td>
+</tr>
+<tr>
+<td>slurm_url</td>
+<td>R</td>
+<td>username and address of slurm cluster</td>
+<td>chnorris@pro.cyfronet.pl</td>
+</tr>
+<tr>
+<td>storage_dir</td>
+<td>R</td>
+<td>path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled; may use env variables)</td>
+<td>/storage</td>
+</tr>
+<tr>
+<td>partition</td>
+<td>R</td>
+<td>request a specific slurm partition for the resource allocation</td>
+<td>plgrid-testing</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>R</td>
+<td>any, meaningful user id used to identify owner of experiment</td>
+<td>pz</td>
+</tr>
+<tr>
+<td>scratch_dir</td>
+<td>O</td>
+<td>subdirectories under $SCRATCH dir (default <code>mrunner</code>)</td>
+<td>mrunner</td>
+</tr>
+<tr>
+<td>resources</td>
+<td>O</td>
+<td>defines resource limits for every experiment (by default no resource limits)</td>
+<td>{cpu: 4, gpu: 1, mem: 8G}</td>
+</tr>
+<tr>
+<td>neptune</td>
+<td>O</td>
+<td>enable/disable neptune (by default enabled)</td>
+<td>true</td>
+</tr>
+<tr>
+<td>modules_to_load</td>
+<td>O</td>
+<td>list of space separated additional slurm modules to load</td>
+<td>plgrid/tools/python/3.6.0 plgrid/tools/ffmpeg/3.2.2</td>
+</tr>
+<tr>
+<td>after_module_load_ cmd</td>
+<td>O</td>
+<td>shell oneliner executed after slurm module load, before sourcing venv</td>
+<td>export PATH=/net/people/plghenrykm/anaconda2/bin:$PATH; source activate opensim-rl-2.7</td>
+</tr>
+<tr>
+<td>venv</td>
+<td>O</td>
+<td>path to virtual environment; can be overwritten by CLI <code>venv</code> option</td>
+<td>'/net/people/plghenrykm/ppo_tpu/ppo_env</td>
+</tr>
+<tr>
+<td>time</td>
+<td>O</td>
+<td>Set a limit on the total run time of the job allocation. If the requested time limit exceeds the partition's time limit, the job will be left in a PENDING state (possibly indefinitely). (Used with <code>sbatch</code> flag)</td>
+<td>3600000</td>
+</tr>
+<tr>
+<td>ntasks</td>
+<td>O</td>
+<td>This option advises the slurm controller that job steps run within the allocation will launch a maximum of number tasks and to provide for sufficient resources. The default is one task per node, but note that the Slurm '--cpus-per-task' option will change this default.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="plgrid">plgrid</h3>
+<p>Filesystem:
+- <code>/net/scratch</code> - lustre filesystem meant for short term use (cleaned after some period of time? 1 month? number of files quota?)
+    - <code>$SCRATCH</code> - your account scratch directory
+    - <code>$SCRATCH/mrunner</code> - current default scratch directory for mrunner 
+- <code>/net/archive</code> - lustre filesystem
+    - <code>$PLG_GROUPS_STORAGE</code> - currently it points to <code>/net/archive/groups</code>
+- <code>/net/people</code> - NFS filesystem
+    - <code>$HOME</code> - your home directory (it is in <code>/net/people</code>)
+    - </p>
+<p>Read <a href="https://proteusmaster.urcf.drexel.edu/urcfwiki/index.php/Lustre_Scratch_Filesystem#Best_Practices">best practices</a>
+while using lustre filesystem (not exactly for plgrid cluster, but certainly shall be used during)</p>
+<h3 id="run-experiment-on-slurm">Run experiment on slurm</h3>
+<p>Available options specific for slurm cluster:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>req</th>
+<th>description / additional information</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>config</td>
+<td>R</td>
+<td>path to neptune experiment configuration; mrunner uses i.a. project and experiment names, parameters list</td>
+<td>neptune.yaml</td>
+</tr>
+<tr>
+<td>base_image</td>
+<td>R</td>
+<td>name and tag of base docker image used to build experiment docker image</td>
+<td>python:3</td>
+</tr>
+<tr>
+<td>requirements</td>
+<td>R</td>
+<td>path to requirements.txt file with python requirements</td>
+<td>requirements.txt</td>
+</tr>
+</tbody>
+</table>
+<p>Sample command call:</p>
+<pre><code class="commandline">mrunner run --config neptune.yaml \
+            --tags &quot;grid_search_k-12-48&quot; --tags new_data \
+            --requirements requirements.txt  \
+            --base_image python:3 experiment1.py -- --param1 1
+</code></pre>
+
+<p>Another example could be:</p>
+<pre><code class="commandline">mrunner --context gke.sandbox run --config neptune.yaml \
+                                  --base_image python:3 \
+                                  --requirements requirements.txt \
+                                  -- experiment1.py -- --epochs 3
+</code></pre>
+
+<p>Notice (in both examples) that certain flags refer to the <code>mrunner</code> itself
+(eg. config, base_image) and others to experiment/script that we wish to run (eg. epochs, param1);
+the way these two sets are separated is relevant ('--'). Context is provided to mrunner before <code>run</code>.</p>
+<p>While running experiments on kubernetes, mrunner performs following
+steps:</p>
+<ol>
+<li>Prepares docker image based on provided in command line parameters</li>
+<li>see <code>templates/Dockerfile.jinja2</code> file for details</li>
+<li>during build docker cache is used, so if there is no change
+in requirements.txt file, build shall be relatively fast</li>
+<li>If new image was generated tags it with timestamp and published in
+docker containers repository.</li>
+<li>Ensure kubernetes configuration (create resources if missing)</li>
+<li>namespace named after project name exists; see <a href="#cluster-namespaces">cluster namespaces</a> section
+how to switch <code>kubectl</code> between them.</li>
+<li><a href="#persistent-volumes">persistent volume claim</a></li>
+<li>Generate kubernetes job - in fact your experiment</li>
+</ol>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../kubernetes/" class="btn btn-neutral float-right" title="kubernetes">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../neptune/" class="btn btn-neutral" title="neptune"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../neptune/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../kubernetes/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

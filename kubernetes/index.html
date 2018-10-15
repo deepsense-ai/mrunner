@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>kubernetes - mrunner</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "kubernetes";
+    var mkdocs_page_input_path = "kubernetes.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> mrunner</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../setup/">setup</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../neptune/">neptune</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../slurm/">slurm</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">kubernetes</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#setup-kubernetes">Setup kubernetes</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#google-kubernetes-engine-gke">Google Kubernetes Engine (GKE)</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#remote-context-keys-for-kubernetes">remote context keys for kubernetes</a></li>
+    
+
+    <li class="toctree-l2"><a href="#run-experiment-on-kubernetes">Run experiment on kubernetes</a></li>
+    
+
+    <li class="toctree-l2"><a href="#cluster-namespaces">Cluster namespaces</a></li>
+    
+
+    <li class="toctree-l2"><a href="#persistent-volumes">Persistent volumes</a></li>
+    
+
+    <li class="toctree-l2"><a href="#kubernetes-tools-cheat-sheet">Kubernetes tools cheat sheet</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../tips/">tips</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">mrunner</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>kubernetes</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p>Kubernetes system may be used to manage computation resources and
+accordingly schedule experimentation jobs. Read more about
+<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/">Kubernetes objects</a>.</p>
+<p><strong>Till now kubernetes support was tested only on GKE</strong> -
+thus it may need some code update in order to run on
+on premise cluster.</p>
+<h3 id="setup-kubernetes">Setup kubernetes</h3>
+<p>(Need to be followed by other persons to write/check steps)</p>
+<ol>
+<li>To manage cluster resources and jobs install
+<a href="https://kubernetes.io/docs/tasks/tools/install-kubectl">kubectl</a>
+tool and setup local <a href="https://docs.docker.com/install/#server">docker</a>
+engine.</li>
+<li>mrunner and kubectl uses kubectl context, which points to which
+cluster we'll communicate to. This structure may be configured, by one of
+below methods:</li>
+<li>while using google kubernetes cluster (GKE) it is done
+   with gcloud tool - see <a href="#google-kubernetes-engine-gke">GKE</a> section
+   for details,</li>
+<li>while using <a href="https://github.com/kubernetes/minikube">minikube</a>
+   there is created <code>minikube</code> context during starting local cluster,</li>
+<li>
+<p>defining context in YAML config (TBD)</p>
+<p>there is possiblity to switch between already configured contexts
+using:</p>
+<p><code>commandline
+  kubectl config use-context &lt;context_name&gt;
+  kubectl config current-context    # show context which is used</code></p>
+</li>
+</ol>
+<p>kubectl configuration is stored in <code>~/.kube/config</code> file and
+can be viewed using:</p>
+<pre><code class="commandline">kubectl config view
+</code></pre>
+
+<h5 id="google-kubernetes-engine-gke">Google Kubernetes Engine (GKE)</h5>
+<p>If you plan to use <a href="https://cloud.google.com/kubernetes-engine/">GKE</a>
+additionally follow below steps:</p>
+<ol>
+<li>Install <a href="https://cloud.google.com/sdk/docs/quickstarts">gcloud</a> tool,
+which will provide authorization to access GKE clusters. It also contain functionality
+to manage GKE clusters and Google Cloud Storage (GCS).</li>
+<li>Configure cluster credentials and kubectl context follow below steps:</li>
+<li>Go to <a href="https://console.cloud.google.com/kubernetes">GKE console</a></li>
+<li>Select project</li>
+<li>Press <code>connect</code> button on clusters list</li>
+<li>Copy and paste <code>gcloud</code> command line</li>
+<li>
+<p>Authorize google cloud sdk by obtaining token with:</p>
+<p><code>sh
+gcloud auth application-default login</code></p>
+</li>
+</ol>
+<h3 id="remote-context-keys-for-kubernetes">remote context keys for kubernetes</h3>
+<p>Possible remote context keys:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>req</th>
+<th>description</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>R</td>
+<td>unique name of context which identifies him</td>
+<td>rl.sandbox</td>
+</tr>
+<tr>
+<td>type</td>
+<td>R</td>
+<td>shall equal <code>kubernetes</code></td>
+<td>kubernetes</td>
+</tr>
+<tr>
+<td>storage</td>
+<td>R</td>
+<td>path to directory where neptune CLI will store data for experiment provenance (required even when neptune is disabled)</td>
+<td>/storage</td>
+</tr>
+<tr>
+<td>registry_url</td>
+<td>R</td>
+<td>url to docker image repository where built experiment images will be published (shall be available also from cluster level)</td>
+<td>https://gcr.io</td>
+</tr>
+<tr>
+<td>resources</td>
+<td>O</td>
+<td>defines resource limits for every experiment (by default no resource limits)</td>
+<td>{cpu: 4, tpu: 1, mem: 8G}</td>
+</tr>
+<tr>
+<td>neptune</td>
+<td>O</td>
+<td>enable/disable neptune (by default enabled)</td>
+<td>true</td>
+</tr>
+<tr>
+<td>google_project_id</td>
+<td>O</td>
+<td>if using GKE set this key with google project id</td>
+<td>rl-sandbox-1234</td>
+</tr>
+<tr>
+<td>default_pvc_size</td>
+<td>O</td>
+<td>size of storage created for new project (see <a href="#persistent-volumes">persistent volumes</a> section; by default creates volume of size <code>KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE</code>)</td>
+<td>100G</td>
+</tr>
+</tbody>
+</table>
+<h3 id="run-experiment-on-kubernetes">Run experiment on kubernetes</h3>
+<p>Available options specific for kubernetes cluster:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>req</th>
+<th>description / additional information</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>config</td>
+<td>R</td>
+<td>path to neptune experiment configuration; mrunner uses i.a. project and experiment names, parameters list</td>
+<td>neptune.yaml</td>
+</tr>
+<tr>
+<td>base_image</td>
+<td>R</td>
+<td>name and tag of base docker image used to build experiment docker image</td>
+<td>python:3</td>
+</tr>
+<tr>
+<td>requirements</td>
+<td>R</td>
+<td>path to requirements.txt file with python requirements</td>
+<td>requirements.txt</td>
+</tr>
+</tbody>
+</table>
+<p>Sample command call:</p>
+<pre><code class="commandline">mrunner run --config neptune.yaml \
+            --tags &quot;grid_search_k-12-48&quot; --tags new_data \
+            --requirements requirements.txt  \
+            --base_image python:3 experiment1.py -- --param1 1
+</code></pre>
+
+<p>Another example could be:</p>
+<pre><code class="commandline">mrunner --context gke.sandbox run --config neptune.yaml \
+                                  --base_image python:3 \
+                                  --requirements requirements.txt \
+                                  -- experiment1.py -- --epochs 3
+</code></pre>
+
+<p>Notice (in both examples) that certain flags refer to the <code>mrunner</code> itself
+(eg. config, base_image) and others to experiment/script that we wish to run (eg. epochs, param1);
+the way these two sets are separated is relevant ('--'). Context is provided to mrunner before <code>run</code>.</p>
+<p>While running experiments on kubernetes, mrunner performs following
+steps:</p>
+<ol>
+<li>Prepares docker image based on provided in command line parameters</li>
+<li>see <code>templates/Dockerfile.jinja2</code> file for details</li>
+<li>during build docker cache is used, so if there is no change
+in requirements.txt file, build shall be relatively fast</li>
+<li>If new image was generated tags it with timestamp and published in
+docker containers repository.</li>
+<li>Ensure kubernetes configuration (create resources if missing)</li>
+<li>namespace named after project name exists; see <a href="#cluster-namespaces">cluster namespaces</a> section
+how to switch <code>kubectl</code> between them.</li>
+<li><a href="#persistent-volumes">persistent volume claim</a></li>
+<li>Generate kubernetes job - in fact your experiment</li>
+</ol>
+<h3 id="cluster-namespaces">Cluster namespaces</h3>
+<p>For each project, new namespace is created in kubernetes cluster.
+This provide freedom in experiments naming, possibility to manage
+resource quota per project, separate storage.
+More details may be found in
+<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">kubernetes documentation</a>.</p>
+<p>kubectl tool is required to have pointed default namespaces. Otherwise, we shall pass <code>--namespace|-n</code> option for each kubectl call. To switch kubectl to access given namespace resources by default set
+kubectl context with:</p>
+<pre><code class="commandline">kubectl get namespace
+kubectl config set-context $(kubectl config current-context) \
+                           --namespace=&lt;project_based_namespace&gt;
+</code></pre>
+
+<h3 id="persistent-volumes">Persistent volumes</h3>
+<p>To gather project data from different experiments in single place,
+it is required to create set of Persistent Volume related resources (see diagram below and <a href="https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs">nfs example</a>). During execution of each experiment, it is checked for existance and correctness of this setup. The size of <code>pvc/storage</code>defines <code>default_pvc_size</code>key from mrunner context, but if not provided volume of size<code>KubernetesBackend.DEFAULT_STORAGE_PVC_SIZE</code>(40GB) will be created.</p>
+<p><img alt="k8s_storage" src="../images/k8s_storage.png" /></p>
+<p>By default volume is mounted under directory pointed by path from <code>$STORAGE_DIR</code> environment variable (the same as passed in <code>storage</code> key mrunner context).</p>
+<h3 id="kubernetes-tools-cheat-sheet">Kubernetes tools cheat sheet</h3>
+<p>To check with which cluster kubectl is communicating:</p>
+<pre><code class="commandline">kubectl config current-context
+</code></pre>
+
+<p>To observe from command line current status of jobs you may use</p>
+<pre><code class="commandline">watch 'kubectl get all,pvc,pv -a'
+watch 'kubectl get all,pvc,pv -a -o wide'
+watch 'kubectl get all,pvc,pv -a --field-selector=metadata.namespace!=kube-system --all-namespaces'
+</code></pre>
+
+<p>To observe logs from given pod (also completed and failed) you may use:</p>
+<pre><code class="commandline">kubectl logs -f &lt;pod_name&gt;
+</code></pre>
+
+<p>In order to connect to running pod use:</p>
+<pre><code class="commandline">kubectl attach &lt;pod_name&gt;
+</code></pre>
+
+<p>To delete job from cluster use below command. But be aware that related
+pod also will be deleted.</p>
+<pre><code class="commandline">kubectl delete job &lt;job_name&gt;
+</code></pre>
+
+<p>To show details of job or pod use:</p>
+<pre><code class="commandline">kubectl describe &lt;resource_name&gt;
+</code></pre>
+
+<p>To download data from presistent volume use:</p>
+<pre><code class="commandline">TBD
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../tips/" class="btn btn-neutral float-right" title="tips">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../slurm/" class="btn btn-neutral" title="slurm"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../slurm/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../tips/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

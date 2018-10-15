@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>dispatcher - mrunner</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "dispatcher";
+    var mkdocs_page_input_path = "dispatcher.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> mrunner</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../setup/">setup</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../neptune/">neptune</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../slurm/">slurm</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../kubernetes/">kubernetes</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../tips/">tips</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">mrunner</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>dispatcher</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="dispatcher">dispatcher</h1>
+<ul>
+<li><a href="#call-stack">Call stack</a></li>
+<li><a href="#standard_mrunner_main">standard_mrunner_main</a></li>
+<li><a href="#how-to-debug">How to debug</a></li>
+</ul>
+<h2 id="remarks-on-current-state">remarks on current state</h2>
+<ul>
+<li>in neptune.yaml there are placed only tags from python spec function</li>
+</ul>
+<h3 id="directories">directories</h3>
+<h2 id="sequence">Sequence</h2>
+<ul>
+<li>mrunner run with python config</li>
+<li>eval spec function from python config and list of <code>Experiment</code> classes</li>
+<li>generate neptune.yaml for each experiment<ul>
+<li>use only: project name, experiment name, parameters, tags, description</li>
+<li>neptune.yaml files are generated into ....</li>
+<li>for generating neptune yaml there are required only dictionary with keys: 
+project, name, parameters, [tags], [description]</li>
+</ul>
+</li>
+</ul>
+<h2 id="sequence-old-dispatcher">Sequence (old dispatcher)</h2>
+<ul>
+<li>shell script</li>
+<li>env setup (environment variables + venv activate etc)</li>
+<li>python dispatcher.py<ul>
+<li>load list of experiments</li>
+<li>special support for composite experiments</li>
+<li>register experiments in omninote</li>
+<li>obtain XRunConfig</li>
+<li>special support for composite experiments</li>
+<li>update attributes from command line</li>
+<li>for each experiment</li>
+<li>generate neptune yaml<ul>
+<li>name, project</li>
+<li>parameters: name, type, required, default</li>
+</ul>
+</li>
+<li>update experiment structure parameters based on CLI arguments<ul>
+<li>tags</li>
+</ul>
+</li>
+<li>generate mrunner cmd</li>
+<li>depends on XRunType<ul>
+<li>slurm: update env (PLGRID_USERNAME, MRUNNER_SCRATCH_SPACE, PLGRID_HOST)</li>
+</ul>
+</li>
+<li>optionally experiments/cmds list is shuffled and/or trimmed to size</li>
+<li>run experiments</li>
+<li>it executes set mrunner cmd</li>
+<li>depends on mrunner backend calls are sync (slurm-srun) or async call (slurm-sbatch, k8s)</li>
+<li>depends on parallel flag passed in neptune CLI<ul>
+<li>using sequential os.system calls if no parallel call</li>
+<li>using <code>subprocess.Popen</code> executed by n threads  </li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="standard_mrunner_main">standard_mrunner_main</h3>
+<p>Required enviornment variables which determine method of setting
+<strong>parameters list</strong> and <strong>experiment directory</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>values</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MRUNNER_UNDER_NEPTUNE</td>
+<td>0/1</td>
+<td>both are obtained from neptune</td>
+</tr>
+<tr>
+<td>PMILOS_DEBUG</td>
+<td>0/1</td>
+<td>experiment directory passed as cmd argument, parameters evaluated from python file</td>
+</tr>
+<tr>
+<td>RESOURCE_DIR_PATH</td>
+<td>path</td>
+<td>experiment directory pointed by this env var, parameters evaluated from neptune yaml file</td>
+</tr>
+</tbody>
+</table>
+<p>When experiment is started:</p>
+<ul>
+<li>under neptune - neptune <code>storage_dir</code> and params are used</li>
+<li>under <code>PMILOS_DEBUG</code> additional arguments are parsed (same as in original <code>dispatcher.py</code>)<ul>
+<li><code>--ex</code> - path to experiment describing python file from which
+function pointed by <code>--spec</code> is executed; this function shall return
+structure containing <code>parameters</code> attribute containing experiment parameters</li>
+<li><code>--spec</code> - as mentioned above: name of function which returns structure
+containing parameters list</li>
+<li><code>--exp_dir_path</code> - path to experiment directory</li>
+</ul>
+</li>
+<li>when both neptune and <code>MRUNNER_DEBUG</code> environment variable are not set<ul>
+<li><code>--neptune</code> - path to neptune yaml file; paramters are obtained from <code>parameters</code>
+key and <code>default</code> values are used</li>
+<li><code>RESOURCE_DIR_PATH</code> - environment variable pointing path to experiment directory</li>
+</ul>
+</li>
+</ul>
+<p>Neptune context obtained in this function is ignored.
+<strong>Experiment dir is also often ignored</strong>, except:
+- <code>model_rl_experiment_loop.py</code> - used to set log dir (see NeptuneLogger)
+- <code>run_kanapa_ppo.py</code> - used to set <code>env_model_path</code></p>
+<h2 id="how-to-debug">How to debug</h2>
+<p>TBD</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
