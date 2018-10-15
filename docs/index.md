@@ -1,5 +1,3 @@
-# mrunner
-
 mrunner is a tool intended to run experiment code on different
 computation systems, without manual deployment and with significantly
 less configuration. Main features are:
@@ -14,5 +12,3 @@ less configuration. Main features are:
 Currently [slurm](https://slurm.schedmd.com) and
 [kubernetes](http://kubernetes.io) clusters are supported.
 It is also possible to run experiment locally.
-
-More details may be found in [documentation](deepsense-ai.github.io/mrunner)

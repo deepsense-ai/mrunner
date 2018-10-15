@@ -1,0 +1,8 @@
+site_name: mrunner
+pages:
+  - setup: setup.md
+  - neptune: neptune.md
+  - slurm: slurm.md
+  - kubernetes: kubernetes.md
+  - tips: tips.md
+theme: readthedocs
