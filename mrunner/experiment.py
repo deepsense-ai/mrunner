@@ -28,6 +28,7 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('env', dict(default=attr.Factory(dict), type=dict)),
     ('resources', dict(default=attr.Factory(dict), type=dict)),
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
+    ('neptune_token_files', dict(default=attr.Factory(list), type=list)),
 ]
 
 

@@ -40,28 +40,11 @@ class DockerFile(GeneratedTemplateFile):
         cmd = experiment_data.pop('cmd')
         updated_cmd = self._rewrite_paths(experiment.cwd, cmd.command)
         paths_to_copy = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)
-        # FIXME: files could not be copied from outside of current directory; currently we make a local copy of it
-        paths_to_copy = self._copy_external_locally(paths_to_copy)
-
         experiment = attr.evolve(experiment, cmd=StaticCmd(command=updated_cmd, env=cmd.env))
 
         super(DockerFile, self).__init__(template_filename=self.DEFAULT_DOCKERFILE_TEMPLATE,
                                          experiment=experiment, requirements_file=requirements_file,
                                          paths_to_copy=paths_to_copy)
-
-    def _copy_external_locally(self, paths_to_copy):
-        new_paths_to_copy = []
-        for local_path, remote_path in paths_to_copy:
-            if local_path.startswith('..'):
-                local_path = Path(local_path)
-                if local_path.isdir():
-                    local_path.copytree(remote_path)
-                else:
-                    Path(remote_path).parent.makedirs_p()
-                    local_path.copy(remote_path)
-                local_path = remote_path
-            new_paths_to_copy.append((local_path, remote_path))
-        return new_paths_to_copy
 
     def _rewrite_paths(self, cwd, cmd):
         updated_cmd = []
@@ -114,7 +97,9 @@ class DockerEngine(object):
         # build image; use cache if possible
         LOGGER.debug(Path(dockerfile.path).text())
         LOGGER.debug('Building docker image')
+        neptune_build_args = self._get_neptune_build_args(experiment)
         image, _ = self._client.images.build(path=experiment.cwd, tag=repository_name,
+                                             buildargs=neptune_build_args,
                                              dockerfile=dockerfile_rel_path, pull=True, rm=True, forcerm=True)
 
         is_image_updated = not old_image or old_image.id != image.id
@@ -156,3 +141,12 @@ class DockerEngine(object):
     def _get_tag(self):
         from datetime import datetime
         return datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+
+    def _get_neptune_build_args(self, experiment):
+        args = {}
+        if experiment.neptune_token_files:
+            neptune_token_path = Path(experiment.neptune_token_files[0])
+            rel_path = Path('.').relpathto(neptune_token_path)
+            args['NEPTUNE_TOKEN'] = neptune_token_path.text()
+            args['NEPTUNE_TOKEN_PATH'] = '/'.join(['/root', ] + [p for p in rel_path.split('/') if p and p != '..'])
+        return args
