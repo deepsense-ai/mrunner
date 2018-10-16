@@ -208,6 +208,12 @@ class SlurmBackend(object):
                 for p in paths_to_dump:
                     LOGGER.debug('Adding "{}" to deployment archive'.format(p.rel_remote_path))
                     tar_file.add(p.local_path, arcname=p.rel_remote_path)
+                if experiment.neptune_token_files:
+                    neptune_token_path = experiment.neptune_token_files[0]
+                    rel_local_path = Path('.').relpathto(neptune_token_path)
+                    remote_path = '/'.join([p for p in rel_local_path.split('/') if p and p != '..'])
+                    LOGGER.debug('Adding "{}" to deployment archive'.format(remote_path))
+                    tar_file.add(neptune_token_path, arcname=remote_path)
 
             # upload archive to cluster and extract
             self._put(temp_file.name, experiment.experiment_scratch_dir)

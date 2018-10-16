@@ -2,13 +2,17 @@ FROM {{ experiment.base_image }}
 
 ARG EXP_DIR=/experiment
 ARG STORAGE_DIR={{ experiment.storage_dir }}
+ARG NEPTUNE_TOKEN=missing
+ARG NEPTUNE_TOKEN_PATH=/root/.neptune/tokens/token
 
 COPY {{ requirements_file }} ${EXP_DIR}/requirements.txt
 RUN pip install --no-cache-dir -r $EXP_DIR/requirements.txt
 {%- for local_path, remote_path in paths_to_copy or ['.'] %}
 COPY {{ local_path }} ${EXP_DIR}/{{ remote_path }}
-{%-  endfor %}
+{%- endfor %}
 ENV STORAGE_DIR=${STORAGE_DIR}
+
+RUN mkdir -p $(dirname ${NEPTUNE_TOKEN_PATH}) && echo ${NEPTUNE_TOKEN} > ${NEPTUNE_TOKEN_PATH}
 
 VOLUME ${STORAGE_DIR}
 VOLUME ${EXP_DIR}

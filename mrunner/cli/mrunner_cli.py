@@ -125,10 +125,14 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
                 experiment['cmd'] = cmd
                 experiment.setdefault('paths_to_copy', [])
                 for possible_token_path in ['~/.neptune_tokens/token', '~/.neptune/tokens/token']:
-                    abs_path = Path(possible_token_path).expanduser().abspath()
-                    if abs_path.exists():
-                        rel_path = Path('.').relpathto(abs_path)
-                        experiment['paths_to_copy'].append(rel_path)
+                    neptune_path = Path(possible_token_path).expanduser().abspath()
+                    if neptune_path.exists():
+                        neptune_token_files = experiment.setdefault('neptune_token_files', [])
+                        neptune_token_files.append(str(neptune_path))
+
+                assert len(experiment.get('neptune_token_files', [])) < 2, \
+                    'You have multiple neptune tokens ({}); remove obsolete'.format(
+                        ', '.join(experiment['neptune_token_files']))
             else:
                 # TODO: implement no neptune version
                 # TODO: for sbatch set log path into something like os.path.join(resource_dir_path, "job_logs.txt")
