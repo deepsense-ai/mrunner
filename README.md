@@ -15,4 +15,4 @@ Currently [slurm](https://slurm.schedmd.com) and
 [kubernetes](http://kubernetes.io) clusters are supported.
 It is also possible to run experiment locally.
 
-More details may be found in [documentation](deepsense-ai.github.io/mrunner)
+More details may be found in [documentation](https://deepsense-ai.github.io/mrunner)
