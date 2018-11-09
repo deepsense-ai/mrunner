@@ -77,7 +77,7 @@ class Job(client.V1Job):
                                  env=[client.V1EnvVar(name=k, value=v) for k, v in envs.items()])
         pod_spec = client.V1PodSpec(restart_policy='Never', containers=[ctr], volumes=[vol])
         pod_template = client.V1PodTemplateSpec(spec=pod_spec)
-        job_spec = client.V1JobSpec(template=pod_template, backoff_limit=1)  # , active_deadline_seconds=100)
+        job_spec = client.V1JobSpec(template=pod_template, backoff_limit=0)  # , active_deadline_seconds=100)
         super(Job, self).__init__(metadata=client.V1ObjectMeta(name=name), spec=job_spec)
 
     def _map_resources(self, resource_name, resource_qty):
