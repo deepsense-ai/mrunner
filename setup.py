@@ -1,15 +1,15 @@
 from setuptools import setup, find_packages
+
 setup(
     name='mrunner',
-    version='0.0.15',
+    version='0.2.1',
     packages=find_packages(),
-    install_requires=['PyYAML', 'fabric'],
+    include_package_data=True,
+    install_requires=['PyYAML', 'fabric3', 'path.py', 'jinja2', 'six', 'attrs>=17.3', 'click',
+                      'docker', 'kubernetes>=5.0.0', 'google-cloud'],
     entry_points={
         'console_scripts': [
-            'mrunner_local=mrunner.mrunner_cli:main',
-            'mrunner_plgrid=mrunner.mrunner_plgrid_cli:main',
-            'mrunner_kube=mrunner.mrunner_kubernetes_cli:main',
-            'command_gen=mrunner.command_gen:main',
+            'mrunner=mrunner.cli.mrunner_cli:cli'
         ],
     },
 )
