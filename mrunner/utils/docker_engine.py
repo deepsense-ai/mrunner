@@ -144,9 +144,8 @@ class DockerEngine(object):
 
     def _get_neptune_build_args(self, experiment):
         args = {}
-        if experiment.neptune_token_files:
-            neptune_token_path = Path(experiment.neptune_token_files[0])
-            rel_path = Path('.').relpathto(neptune_token_path)
-            args['NEPTUNE_TOKEN'] = neptune_token_path.text()
+        if experiment.local_neptune_token:
+            rel_path = Path('.').relpathto(experiment.local_neptune_token.path)
+            args['NEPTUNE_TOKEN'] = experiment.local_neptune_token.content
             args['NEPTUNE_TOKEN_PATH'] = '/'.join(['/root', ] + [p for p in rel_path.split('/') if p and p != '..'])
         return args

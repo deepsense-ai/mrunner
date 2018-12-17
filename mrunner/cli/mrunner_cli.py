@@ -7,10 +7,10 @@ import click
 from path import Path
 
 from mrunner.backends.k8s import KubernetesBackend
-from mrunner.backends.slurm import SlurmBackend
+from mrunner.backends.slurm import SlurmBackend, SlurmNeptuneToken
 from mrunner.cli.config import ConfigParser, context as context_cli
 from mrunner.experiment import generate_experiments, get_experiments_spec_handle
-from mrunner.utils.neptune import NeptuneWrapperCmd
+from mrunner.utils.neptune import NeptuneWrapperCmd, NeptuneToken, NEPTUNE_LOCAL_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -118,21 +118,25 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
                 cmd = ' '.join([script] + list(params))
                 # tags from neptune.yaml will be extracted by neptune
                 additional_tags = context.get('tags', []) + list(tags)
-                cmd = NeptuneWrapperCmd(cmd=cmd, experiment_config_path=neptune_path,
-                                        neptune_storage=context['storage_dir'],
-                                        paths_to_dump=None,
-                                        additional_tags=additional_tags)
-                experiment['cmd'] = cmd
-                experiment.setdefault('paths_to_copy', [])
-                for possible_token_path in ['~/.neptune_tokens/token', '~/.neptune/tokens/token']:
-                    neptune_path = Path(possible_token_path).expanduser().abspath()
-                    if neptune_path.exists():
-                        neptune_token_files = experiment.setdefault('neptune_token_files', [])
-                        neptune_token_files.append(str(neptune_path))
 
-                assert len(experiment.get('neptune_token_files', [])) < 2, \
-                    'You have multiple neptune tokens ({}); remove obsolete'.format(
-                        ', '.join(experiment['neptune_token_files']))
+                remote_neptune_token = None
+                if NEPTUNE_LOCAL_VERSION.version[0] == 2:
+                    experiment.local_neptune_token = NeptuneToken()
+                    assert experiment.local_neptune_token.path.exists(), \
+                        'Login to neptune first with `neptune account login` command'
+
+                    remote_neptune_token = {
+                        'kubernetes': NeptuneToken,
+                        'slurm': lambda: SlurmNeptuneToken(experiment)
+                    }[experiment['backend_type']]()
+
+                neptune_profile_name = remote_neptune_token.profile_name if remote_neptune_token else None
+                experiment['cmd'] = NeptuneWrapperCmd(cmd=cmd, experiment_config_path=neptune_path,
+                                                      neptune_storage=context['storage_dir'],
+                                                      paths_to_dump=None,
+                                                      additional_tags=additional_tags,
+                                                      neptune_profile=neptune_profile_name)
+                experiment.setdefault('paths_to_copy', [])
             else:
                 # TODO: implement no neptune version
                 # TODO: for sbatch set log path into something like os.path.join(resource_dir_path, "job_logs.txt")

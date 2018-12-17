@@ -9,7 +9,8 @@ import six
 from path import Path
 
 from mrunner.utils.namesgenerator import id_generator, get_random_name
-from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION
+from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION, \
+    NeptuneToken
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('env', dict(default=attr.Factory(dict), type=dict)),
     ('resources', dict(default=attr.Factory(dict), type=dict)),
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
-    ('neptune_token_files', dict(default=attr.Factory(list), type=list)),
+    ('local_neptune_token', dict(default=None, type=NeptuneToken)),
 ]
 
 

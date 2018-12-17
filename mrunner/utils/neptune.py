@@ -5,6 +5,8 @@ from copy import copy
 from distutils.version import LooseVersion
 
 import six
+from path import Path
+
 try:
     from deepsense import version as neptune_version
 except ImportError:
@@ -13,6 +15,8 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 NEPTUNE_LOCAL_VERSION = LooseVersion(neptune_version.__version__)
+NEPTUNE2_MIN_VERSION = LooseVersion('2.8.19')
+NEPTUNE_PROFILES_DIR = '~/.neptune/profiles'
 
 
 class NeptuneConfigFileBase(object):
@@ -119,13 +123,14 @@ def load_neptune_config(neptune_config_path):
 class NeptuneWrapperCmd(object):
 
     def __init__(self, cmd, experiment_config_path, neptune_storage=None, additional_tags=None, paths_to_dump=None,
-                 docker_image=None):
+                 docker_image=None, neptune_profile=None):
         self._cmd = cmd
         self._experiment_config_path = experiment_config_path
         self._additional_tags = additional_tags
         self._storage = neptune_storage
         self._paths_to_dump = paths_to_dump
         self._docker_image = docker_image
+        self._neptune_profile = neptune_profile
 
     @property
     def command(self):
@@ -133,22 +138,28 @@ class NeptuneWrapperCmd(object):
         while cmd[0].startswith('python'):
             cmd = cmd[1:]
 
-        base_argv = ['neptune', 'run', '--config', str(self._experiment_config_path)]
+        base_argv = ['neptune', 'run']
+        profile_argv = ['--profile', self._neptune_profile] if self._neptune_profile else []
+        config_argv = ['--config', str(self._experiment_config_path)]
         if NEPTUNE_LOCAL_VERSION.version[0] == 1:
-            storage_arv = ['--storage', self._storage] if self._storage else []
+            storage_argv = ['--storage', self._storage] if self._storage else []
             tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
             # for v2 it is exclude param
             dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
             cmd = [cmd[0], '--'] + cmd[1:]
         else:
-            storage_arv = []
+            # TODO: remove this after trim down neptune v1 support and add neptune-cli to requirements
+            if NEPTUNE_LOCAL_VERSION < NEPTUNE2_MIN_VERSION:
+                raise RuntimeError('Update your neptune-cli (need at least {}), '
+                                   'Clean your ~/.neptune directory and login again'.format(NEPTUNE2_MIN_VERSION))
+            storage_argv = []
             tags_argv = []
             for tag in self._additional_tags:
                 tags_argv.extend(['--tag', tag])
             dump_argv = []
         docker_argv = ['--docker-image', self._docker_image] if self._docker_image else []
 
-        cmd = base_argv + storage_arv + tags_argv + dump_argv + docker_argv + cmd
+        cmd = base_argv + profile_argv + config_argv + storage_argv + tags_argv + dump_argv + docker_argv + cmd
         return ' '.join(cmd)
 
     @property
@@ -182,3 +193,22 @@ class NeptuneWrapperCmd(object):
             return neptune_config.NeptuneConfig(global_config=global_config)
         except ImportError:
             raise RuntimeError('Install neptune-cli first and configure connection')
+
+
+class NeptuneToken(object):
+
+    def __init__(self, profile: str = 'default'):
+        self._profile = profile
+
+    @property
+    def profile_name(self):
+        return self._profile
+
+    @property
+    def path(self):
+        neptune_profiles_dir = Path(NEPTUNE_PROFILES_DIR)
+        return neptune_profiles_dir / self.profile_name / 'tokens/token'
+
+    @property
+    def content(self):
+        return self.path.text()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import socket
 import tarfile
 import tempfile
 
@@ -14,7 +15,7 @@ from path import Path
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
 from mrunner.plgrid import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
 from mrunner.utils.namesgenerator import id_generator
-from mrunner.utils.neptune import NEPTUNE_LOCAL_VERSION
+from mrunner.utils.neptune import NeptuneToken
 from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
@@ -76,9 +77,6 @@ class ExperimentScript(GeneratedTemplateFile):
         env = experiment.cmd.env.copy() if experiment.cmd else {}
         env.update(experiment.env)
         env = {k: str(v) for k, v in env.items()}
-
-        if NEPTUNE_LOCAL_VERSION.version[0] == 2:
-            env['HOME'] = '$(pwd)'  # neptune shall loads token local copy of .neptune_tokens|.neptune/tokens
 
         experiment = attr.evolve(experiment, env=env, experiment_scratch_dir=experiment.experiment_scratch_dir)
 
@@ -176,6 +174,16 @@ class SRunWrapperCmd(SlurmWrappersCmd):
         self._cmd = 'srun'
 
 
+class SlurmNeptuneToken(NeptuneToken):
+
+    def __init__(self, experiment):
+        super(NeptuneToken, self).__init__(experiment.user_id)
+
+    @property
+    def profile_name(self):
+        return '{}-{}'.format(self._profile, socket.gethostname())
+
+
 class SlurmBackend(object):
 
     def run(self, experiment):
@@ -191,6 +199,7 @@ class SlurmBackend(object):
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
+        self.deploy_neptune_token(experiment=experiment)
         script_path = self.deploy_code(experiment)
         SCmd = {'sbatch': SBatchWrapperCmd, 'srun': SRunWrapperCmd}[experiment.cmd_type]
         cmd = SCmd(experiment=experiment, script_path=script_path)
@@ -208,12 +217,6 @@ class SlurmBackend(object):
                 for p in paths_to_dump:
                     LOGGER.debug('Adding "{}" to deployment archive'.format(p.rel_remote_path))
                     tar_file.add(p.local_path, arcname=p.rel_remote_path)
-                if experiment.neptune_token_files:
-                    neptune_token_path = experiment.neptune_token_files[0]
-                    rel_local_path = Path('.').relpathto(neptune_token_path)
-                    remote_path = '/'.join([p for p in rel_local_path.split('/') if p and p != '..'])
-                    LOGGER.debug('Adding "{}" to deployment archive'.format(remote_path))
-                    tar_file.add(neptune_token_path, arcname=remote_path)
 
             # upload archive to cluster and extract
             self._put(temp_file.name, experiment.experiment_scratch_dir)
@@ -227,6 +230,11 @@ class SlurmBackend(object):
         self._put(script.path, remote_script_path)
 
         return remote_script_path
+
+    def deploy_neptune_token(self, experiment):
+        if experiment.local_neptune_token:
+            remote_token = SlurmNeptuneToken(experiment=experiment)
+            self._put(experiment.local_neptune_token.path, remote_token.path)
 
     @staticmethod
     def _put(local_path, remote_path, quiet=True):
