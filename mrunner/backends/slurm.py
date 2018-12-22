@@ -177,11 +177,10 @@ class SRunWrapperCmd(SlurmWrappersCmd):
 class SlurmNeptuneToken(NeptuneToken):
 
     def __init__(self, experiment):
-        super(NeptuneToken, self).__init__(experiment.user_id)
-
-    @property
-    def profile_name(self):
-        return '{}-{}'.format(self._profile, socket.gethostname())
+        # TODO: need refactor other part of code - here expereiment can be dict or backend specific object
+        user_id = experiment['user_id'] if isinstance(experiment, dict) else experiment.user_id
+        profile_name = '{}-{}'.format(user_id, socket.gethostname())
+        super(SlurmNeptuneToken, self).__init__(profile=profile_name)
 
 
 class SlurmBackend(object):
@@ -234,6 +233,7 @@ class SlurmBackend(object):
     def deploy_neptune_token(self, experiment):
         if experiment.local_neptune_token:
             remote_token = SlurmNeptuneToken(experiment=experiment)
+            self._ensure_dir(remote_token.path.parent)
             self._put(experiment.local_neptune_token.path, remote_token.path)
 
     @staticmethod

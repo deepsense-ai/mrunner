@@ -121,8 +121,8 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
 
                 remote_neptune_token = None
                 if NEPTUNE_LOCAL_VERSION.version[0] == 2:
-                    experiment.local_neptune_token = NeptuneToken()
-                    assert experiment.local_neptune_token.path.exists(), \
+                    experiment['local_neptune_token'] = NeptuneToken()
+                    assert experiment['local_neptune_token'].path.expanduser().exists(), \
                         'Login to neptune first with `neptune account login` command'
 
                     remote_neptune_token = {

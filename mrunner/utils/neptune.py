@@ -16,6 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 NEPTUNE_LOCAL_VERSION = LooseVersion(neptune_version.__version__)
 NEPTUNE2_MIN_VERSION = LooseVersion('2.8.19')
+# this intentionally has $HOME - because it can be run evaluated on different machines
 NEPTUNE_PROFILES_DIR = '~/.neptune/profiles'
 
 
