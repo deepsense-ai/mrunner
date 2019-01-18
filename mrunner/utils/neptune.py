@@ -214,4 +214,4 @@ class NeptuneToken(object):
 
     @property
     def content(self):
-        return self.path.text()
+        return self.path.expanduser().text()
