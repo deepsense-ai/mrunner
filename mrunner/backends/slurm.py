@@ -191,8 +191,7 @@ class SlurmBackend(object):
         # configure fabric
         slurm_url = experiment.pop('slurm_url', '{}@{}'.format(PLGRID_USERNAME, PLGRID_HOST))
         env['host_string'] = slurm_url
-
-        slurm_scratch_dir = Path(self._fabric_run('echo $SCRATCH'))
+        slurm_scratch_dir = experiment['storage_dir']
         experiment = ExperimentRunOnSlurm(slurm_scratch_dir=slurm_scratch_dir, slurm_url=slurm_url,
                                           **filter_only_attr(ExperimentRunOnSlurm, experiment))
         LOGGER.debug('Configuration: {}'.format(experiment))
