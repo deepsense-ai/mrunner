@@ -152,7 +152,9 @@ class NeptuneWrapperCmd(object):
             # TODO: remove this after trim down neptune v1 support and add neptune-cli to requirements
             if NEPTUNE_LOCAL_VERSION < NEPTUNE2_MIN_VERSION:
                 raise RuntimeError('Update your neptune-cli (need at least {}), '
-                                   'Clean your ~/.neptune directory and login again'.format(NEPTUNE2_MIN_VERSION))
+                                   'Clean your ~/.neptune directory and login again. '
+                                   'You may also need to remove deepsense dir '
+                                   'in your python environment'.format(NEPTUNE2_MIN_VERSION))
             storage_argv = []
             tags_argv = []
             for tag in self._additional_tags:
