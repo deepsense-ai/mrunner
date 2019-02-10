@@ -164,10 +164,19 @@ def generate_experiments(script, neptune, context, *, spec='spec',
         yield neptune_path, experiment
 
 
+_spec_fun = None
+
 def get_experiments_spec_handle(script, spec):
-    vars = {}
+    global _spec_fun
+    print(script)
+    if _spec_fun is not None:
+        return _spec_fun
+
+    vars = {'script':  str(Path(script).name)}
     exec(open(script).read(), vars)
     spec_fun = vars.get(spec, None)
     if not callable(spec_fun):
         spec_fun = None
+
+    _spec_fun = spec_fun
     return spec_fun
