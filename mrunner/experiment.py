@@ -168,7 +168,6 @@ _spec_fun = None
 
 def get_experiments_spec_handle(script, spec):
     global _spec_fun
-    print(script)
     if _spec_fun is not None:
         return _spec_fun
 
