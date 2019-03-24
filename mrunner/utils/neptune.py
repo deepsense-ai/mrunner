@@ -136,8 +136,8 @@ class NeptuneWrapperCmd(object):
     @property
     def command(self):
         cmd = self._cmd.split(' ') if isinstance(self._cmd, six.string_types) else self._cmd
-        while cmd[0].startswith('python'):
-            cmd = cmd[1:]
+        # while cmd[0].startswith('python'):
+        #     cmd = cmd[1:]
 
         base_argv = ['neptune', 'run']
         profile_argv = ['--profile', self._neptune_profile] if self._neptune_profile else []
@@ -162,7 +162,9 @@ class NeptuneWrapperCmd(object):
             dump_argv = []
         docker_argv = ['--docker-image', self._docker_image] if self._docker_image else []
 
-        cmd = base_argv + profile_argv + config_argv + storage_argv + tags_argv + dump_argv + docker_argv + cmd
+        cmd = cmd + config_argv
+        # print(cmd)
+        # exit(0)
         return ' '.join(cmd)
 
     @property
