@@ -6,7 +6,7 @@
      context_name: plgrid_cpu
      modules_to_load:
      - plgrid/tools/python/3.6.5
-     - plgrid/tools/ffmpeg/3.0
+     - plgrid/tools/openmpi/3.0.0-gcc-4.9.2
      neptune: true
      partition: plgrid
      resources:

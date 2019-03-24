@@ -92,13 +92,25 @@ def logger(m, v):
 
 # ===============^^This code should be factored out ===========
 
+
 # install pip install neptune-client
 # To run locally: mrunner/example/example_experiment.py --ex mrunner/example/example_experiment_conf.py
 #
 def main():
+  import os
+  rank = os.environ.get("OMPI_COMM_WORLD_RANK", "no ompi")
+  print("Rank:{}".format(rank))
+  with_neptune=(rank=="0")
+  print("With neptune:{}".format(with_neptune))
+
+
   #@HM: Here you can check MPI_RANK and set with_neptune=True/False
   config, exp_dir_path = get_configuration(print_diagnostics=True,
                                            with_neptune=True)
+
+
+
+
   for x in range(10):
     logger("test channel", x)
 

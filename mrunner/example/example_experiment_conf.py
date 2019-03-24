@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.getcwd(), 'some_utils'))
 def create_experiment_for_spec(parameters):
    # @HM: here you include mpi command
    # script = "mpi command here"
-   script = 'python example_experiment.py'
+   script = 'mpirun python example_experiment.py'
    # this will be also displayed in jobs on prometheus
    name = 'your initials, experiment name'
    project_name = "sandbox"
@@ -18,7 +18,8 @@ def create_experiment_for_spec(parameters):
    return Experiment(project=project_name, name=name, script=script,
                      parameters=parameters, python_path=python_path,
                      paths_to_dump=paths_to_dump, tags=tags,
-                     time='1-0'  # days-hours
+                     time='1-0',
+                     ntasks=2
                      )
 
 

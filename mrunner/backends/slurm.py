@@ -119,6 +119,7 @@ class SlurmWrappersCmd(object):
         _extend_cmd_items(cmd_items, '-o', 'log_output_path', default_log_path)  # output
         _extend_cmd_items(cmd_items, '-p', 'partition')
         _extend_cmd_items(cmd_items, '-t', 'time')
+        # _extend_cmd_items(cmd_items, '-n', 'ntasks')
 
         cmd_items += self._resources_items()
         cmd_items += [self._script_path]
