@@ -2,7 +2,7 @@
    plgrid_cpu:
      account: lsrl
      backend_type: slurm
-     cmd_type: srun
+     cmd_type: sbatch
      context_name: plgrid_cpu
      modules_to_load:
      - plgrid/tools/python/3.6.5
