@@ -171,7 +171,10 @@ def get_experiments_spec_handle(script, spec):
     if _spec_fun is not None:
         return _spec_fun
 
-    vars = {'script':  str(Path(script).name)}
+    vars = {
+        'script':  str(Path(script).name),
+        '__file__': str(Path(script)),
+    }
     exec(open(script).read(), vars)
     spec_fun = vars.get(spec, None)
     if not callable(spec_fun):
