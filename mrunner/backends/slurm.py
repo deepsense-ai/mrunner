@@ -61,6 +61,7 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('modules_to_load', dict(default=attr.Factory(list), type=list)),
     ('after_module_load_cmd', dict(default='')),
     ('cmd_type', dict(default='srun')),
+    ('requirements_file', dict(default=(None)))
 ]
 
 EXPERIMENT_FIELDS = COMMON_EXPERIMENT_MANDATORY_FIELDS + EXPERIMENT_MANDATORY_FIELDS + \
