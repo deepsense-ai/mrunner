@@ -8,6 +8,9 @@ module load {{ module_name }}
 {{ experiment.after_module_load_cmd }}
 {%- endif %}
 source {{ experiment.venv }}/bin/activate
+{%- if experiment.requirements_file %}
+pip install -r {{ experiment.requirements_file }}
+{%- endif %}
 {%- for env_key, env_value in experiment.env.items() %}
 export {{ env_key }}={{ env_value }}
 {%- endfor %}
