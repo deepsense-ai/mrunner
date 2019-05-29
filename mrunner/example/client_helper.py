@@ -36,15 +36,17 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
     params = Munch(experiment['parameters'])
 
   if with_neptune:
-    neptune_logger_on = True
-    import neptune
-    #TODO pass api_token otherwise!!!!!
-    neptune.init(api_token='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5tbCIsImFwaV9rZXkiOiIwNDY5NmQzMi00ZjM4LTRhZTYtYjA3OS03MTQzOGM2MzQyM2YifQ==',
-                 project_qualified_name=experiment.project)
-    neptune.create_experiment()
+    if 'NEPTUNE_API_TOKEN' not in os.environ:
+      print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
+    else:
+      neptune_logger_on = True
+      import neptune
+      neptune.init(project_qualified_name=experiment.project)
+      neptune.create_experiment()
+      for name in params:
+        neptune.set_property(name, params[name])
 
-    #TODO: push parameters to neptune
-    #TODO: add handle to quit experiment
+      #TODO: add handle to quit experiment
 
 
   # TODO(pm): find a way to pass metainformation
