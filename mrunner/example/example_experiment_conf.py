@@ -1,25 +1,22 @@
 from munch import Munch
-
 from mrunner.experiment import Experiment
-import sys, os
-
-sys.path.append(os.path.join(os.getcwd(), 'some_utils'))
 
 def create_experiment_for_spec(parameters):
-   # @HM: here you include mpi command
-   # script = "mpi command here"
-   script = 'mpirun python example_experiment.py'
-   # this will be also displayed in jobs on prometheus
-   name = 'your initials, experiment name'
-   project_name = "sandbox"
+   script = 'python example_experiment.py'
+
+   name = 'Piotr Milos test experiment'
+
+   project_name = 'loss/sandbox'
    python_path = '.:some_utils:some/other/utils/path'
-   paths_to_dump = ''  # e.g. 'plgrid tensor2tensor', do we need it?
-   tags = 'test_user other_tag'.split(' ')
+
+   paths_to_dump = ''
+
+   tags = ['test_experiments']
+
    return Experiment(project=project_name, name=name, script=script,
                      parameters=parameters, python_path=python_path,
                      paths_to_dump=paths_to_dump, tags=tags,
-                     time='1-0',
-                     ntasks=2
+                     time='0-0:10'
                      )
 
 
