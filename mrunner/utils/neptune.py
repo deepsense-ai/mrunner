@@ -135,32 +135,34 @@ class NeptuneWrapperCmd(object):
 
     @property
     def command(self):
+        # Todo(pm): clean unwanted stuff
+
         cmd = self._cmd.split(' ') if isinstance(self._cmd, six.string_types) else self._cmd
         # while cmd[0].startswith('python'):
         #     cmd = cmd[1:]
-
-        base_argv = ['neptune', 'run']
-        profile_argv = ['--profile', self._neptune_profile] if self._neptune_profile else []
+        # base_argv = ['neptune', 'run']
+        # profile_argv = ['--profile', self._neptune_profile] if self._neptune_profile else []
         config_argv = ['--config', str(self._experiment_config_path)]
-        if NEPTUNE_LOCAL_VERSION.version[0] == 1:
-            storage_argv = ['--storage', self._storage] if self._storage else []
-            tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
-            # for v2 it is exclude param
-            dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
-            cmd = [cmd[0], '--'] + cmd[1:]
-        else:
-            # TODO: remove this after trim down neptune v1 support and add neptune-cli to requirements
-            if NEPTUNE_LOCAL_VERSION < NEPTUNE2_MIN_VERSION:
-                raise RuntimeError('Update your neptune-cli (need at least {}), '
-                                   'Clean your ~/.neptune directory and login again. '
-                                   'You may also need to remove deepsense dir '
-                                   'in your python environment'.format(NEPTUNE2_MIN_VERSION))
-            storage_argv = []
-            tags_argv = []
-            for tag in self._additional_tags:
-                tags_argv.extend(['--tag', tag])
-            dump_argv = []
-        docker_argv = ['--docker-image', self._docker_image] if self._docker_image else []
+
+        # if NEPTUNE_LOCAL_VERSION.version[0] == 1:
+        #     storage_argv = ['--storage', self._storage] if self._storage else []
+        #     tags_argv = ['--tags'] + self._additional_tags if self._additional_tags else []
+        #     # for v2 it is exclude param
+        #     dump_argv = ['--paths-to-copy'] + self._paths_to_dump if self._paths_to_dump else []
+        #     cmd = [cmd[0], '--'] + cmd[1:]
+        # else:
+        #     # TODO: remove this after trim down neptune v1 support and add neptune-cli to requirements
+        #     if NEPTUNE_LOCAL_VERSION < NEPTUNE2_MIN_VERSION:
+        #         raise RuntimeError('Update your neptune-cli (need at least {}), '
+        #                            'Clean your ~/.neptune directory and login again. '
+        #                            'You may also need to remove deepsense dir '
+        #                            'in your python environment'.format(NEPTUNE2_MIN_VERSION))
+        #     storage_argv = []
+        #     tags_argv = []
+        #     for tag in self._additional_tags:
+        #         tags_argv.extend(['--tag', tag])
+        #     dump_argv = []
+        # docker_argv = ['--docker-image', self._docker_image] if self._docker_image else []
 
         cmd = cmd + config_argv
         # print(cmd)
@@ -171,21 +173,21 @@ class NeptuneWrapperCmd(object):
     def env(self):
         # setup env variables to setup neptune config
         neptune_env = {}
-        if NEPTUNE_LOCAL_VERSION.version[0] == 1:
-            # neptune connection config is required because experiments from different neptune accounts may be
-            # started on same system account
-            config = self.conf
-            assert config['username'], "Use ~/.neptune.yaml to setup credentials"
-            assert config['password'], "Use ~/.neptune.yaml to setup credentials"
-
-            neptune_env = {'NEPTUNE_PASSWORD': str(config['password']), 'NEPTUNE_USER': str(config['username'])}
-            if 'host' in config:
-                neptune_env['NEPTUNE_HOST'] = str(config['host'])
-            if 'port' in config:
-                neptune_env['NEPTUNE_PORT'] = str(config['port'])
-
-        # TODO: [PZ] because neptune env vars are set, maybe it is not required to set additional env var?
-        neptune_env.update({'MRUNNER_UNDER_NEPTUNE': '1'})
+        # TODO(pm): remove it.
+        # if NEPTUNE_LOCAL_VERSION.version[0] == 1:
+        #     # neptune connection config is required because experiments from different neptune accounts may be
+        #     # started on same system account
+        #     config = self.conf
+        #     assert config['username'], "Use ~/.neptune.yaml to setup credentials"
+        #     assert config['password'], "Use ~/.neptune.yaml to setup credentials"
+        #
+        #     neptune_env = {'NEPTUNE_PASSWORD': str(config['password']), 'NEPTUNE_USER': str(config['username'])}
+        #     if 'host' in config:
+        #         neptune_env['NEPTUNE_HOST'] = str(config['host'])
+        #     if 'port' in config:
+        #         neptune_env['NEPTUNE_PORT'] = str(config['port'])
+        #
+        # neptune_env.update({'MRUNNER_UNDER_NEPTUNE': '1'})
         return neptune_env
 
     @property
