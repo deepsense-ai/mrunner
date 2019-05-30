@@ -42,11 +42,12 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
       neptune_logger_on = True
       import neptune
       neptune.init(project_qualified_name=experiment.project)
-      neptune.create_experiment()
+      neptune.create_experiment(name=experiment.name)
       for name in params:
         neptune.set_property(name, params[name])
 
-      #TODO: add handle to quit experiment
+      import atexit
+      atexit.register(neptune.stop)
 
 
   # TODO(pm): find a way to pass metainformation
