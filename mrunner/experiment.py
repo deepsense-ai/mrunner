@@ -9,8 +9,8 @@ import six
 from path import Path
 
 from mrunner.utils.namesgenerator import id_generator, get_random_name
-from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION, \
-    NeptuneToken
+# from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION, \
+#     NeptuneToken
 
 LOGGER = logging.getLogger(__name__)
 
@@ -29,7 +29,6 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('env', dict(default=attr.Factory(dict), type=dict)),
     ('resources', dict(default=attr.Factory(dict), type=dict)),
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
-    ('local_neptune_token', dict(default=None, type=NeptuneToken)),
 ]
 
 
@@ -102,6 +101,8 @@ def merge_experiment_parameters(cli_kwargs, neptune_config, context):
 def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir, neptune_version=None):
     LOGGER.info('Found {} function in {}; will use it as experiments configuration generator'.format(spec, script))
     neptune_support = bool(neptune_dir)
+    # TODO(pm): This is to be refactored
+    neptune_support = False
     if neptune_support:
         if neptune_version and NEPTUNE_LOCAL_VERSION < neptune_version:
             # this shall match because we'll later use local neptune to parse them
@@ -147,6 +148,8 @@ def generate_experiments(script, neptune, context, *, spec='spec',
                                                                      neptune_dir=neptune_dir,
                                                                      neptune_version=neptune_version)
     else:
+        # TODO(pm): refactor!
+        assert False, "Should not get here."
         neptune_config = load_neptune_config(neptune)
         experiments = [(neptune, {'script': script, 'name': neptune_config['name']})]
 
