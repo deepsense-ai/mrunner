@@ -1,2 +1,64 @@
 #!/usr/bin/env bash
 
+#run as basic_setup.sh PROMETHEUS_LOGIN
+
+set -e
+export PROMETHEUS_LOGIN=$1
+
+function prepare_local_venv {
+    ENV_DIR=/tmp/example_venv
+    echo "=================================================================="
+    echo "Setting up local virtual env in $ENV_DIR"
+    echo "We assume python3"
+    echo "=================================================================="
+
+    rm -rf $ENV_DIR
+    python3 -m venv $ENV_DIR
+    source $ENV_DIR/bin/activate
+    pip install -r resources/requirements_local.txt
+}
+
+function prepare_remove_venv {
+    echo "=================================================================="
+    echo "Setting up remote env in mrunner_example_env"
+    echo "=================================================================="
+    scp resources/requirements_remote.txt $PROMETHEUS_LOGIN@pro.cyfronet.pl:
+    scp resources/setup_remote_env.sh $PROMETHEUS_LOGIN@pro.cyfronet.pl:
+
+    ssh plgrid chmod +x setup_remote_env.sh
+    ssh plgrid ./setup_remote_env.sh
+}
+
+function prepare_mrunner_config {
+    echo "=================================================================="
+    echo "Preparing mrunner config in /tmp/mrunner_config.yaml"
+    echo "=================================================================="
+
+    sed "s/<username>/$PROMETHEUS_LOGIN/g" resources/prometheus_config_template.yaml > /tmp/mrunner_config.yaml
+
+    cat /tmp/mrunner_config.yaml
+
+}
+
+
+function prepare_env_and_mrunner_config {
+    if [ -z "$PROMETHEUS_LOGIN" ]; then echo "PROMETHEUS_LOGIN must be set. exiting";exit; fi
+#    prepare_local_venv
+#    prepare_remove_venv
+    prepare_mrunner_config
+}
+
+echo "=================================================================="
+echo "This script will prepare a local virutal environment, remote virtual envrionment on prometheus and simple run config."
+echo "We assume that you have locally installed python3 and access to prometheus"
+echo "Please review this script before running it."
+
+echo "=================================================================="
+
+echo "Should we run?"
+select yn in "Yes" "No"; do
+    case $yn in
+        "Yes" ) prepare_env_and_mrunner_config; break;;
+        "No" ) echo "exiting"; exit;;
+    esac
+done

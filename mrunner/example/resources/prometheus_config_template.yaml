@@ -2,18 +2,17 @@
    plgrid_cpu:
      account: lsrl
      backend_type: slurm
-     cmd_type: sbatch
+     cmd_type: srun
      context_name: plgrid_cpu
      modules_to_load:
      - plgrid/tools/python/3.6.5
-     - plgrid/tools/openmpi/3.0.0-gcc-4.9.2
      neptune: true
      partition: plgrid
      resources:
        cpu: 2
        mem: 5G
-     slurm_url: plgloss@pro.cyfronet.pl
-     storage_dir: /net/archive/groups/plggrl_algo/pmilos
-     user_id: pm
-     venv: /net/people/plgloss/venv36_new
+     slurm_url: <username>@pro.cyfronet.pl
+     storage_dir: /net/archive/groups/plggluna/<username>
+     user_id: user
+     venv: /net/people/<username>/mrunner_example_env
  current_context: plgrid_cpu
