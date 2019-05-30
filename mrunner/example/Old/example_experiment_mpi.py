@@ -94,7 +94,7 @@ def logger(m, v):
 
 
 # install pip install neptune-client
-# To run locally: mrunner/example/example_experiment.py --ex mrunner/example/example_experiment_conf.py
+# To run locally: mrunner/example/experiment_basic.py --ex mrunner/example/experiment_basic_conf.py
 #
 def main():
   import os

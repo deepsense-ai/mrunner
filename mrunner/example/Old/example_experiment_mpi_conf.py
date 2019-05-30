@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.getcwd(), 'some_utils'))
 def create_experiment_for_spec(parameters):
    # @HM: here you include mpi command
    # script = "mpi command here"
-   script = 'mpirun python example_experiment.py'
+   script = 'mpirun python experiment_basic.py'
    # this will be also displayed in jobs on prometheus
    name = 'your initials, experiment name'
    project_name = "sandbox"
