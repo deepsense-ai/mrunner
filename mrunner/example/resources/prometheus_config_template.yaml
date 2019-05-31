@@ -1,5 +1,5 @@
  contexts:
-   plgrid_cpu:
+   prometheus_cpu:
      account: lsrl
      backend_type: slurm
      cmd_type: srun
@@ -7,7 +7,7 @@
      modules_to_load:
      - plgrid/tools/python/3.6.5
      neptune: true
-     partition: plgrid
+     partition: plgrid-testing
      resources:
        cpu: 2
        mem: 5G
@@ -15,4 +15,22 @@
      storage_dir: /net/archive/groups/plggluna/<username>
      user_id: user
      venv: /net/people/<username>/mrunner_example_env
- current_context: plgrid_cpu
+
+   eagle_cpu:
+     account: lsrl
+     backend_type: slurm
+     cmd_type: srun
+     context_name: plgrid_cpu
+     modules_to_load:
+     neptune: true
+     partition: plgrid-testing
+     resources:
+       cpu: 2
+       mem: 5G
+     slurm_url: <username>@eagle.man.poznan.pl
+     storage_dir: /home/plgrid/<username>
+     user_id: user
+     venv: /home/plgrid/<username>/mrunner_example_env
+
+
+ current_context: prometheus_cpu
