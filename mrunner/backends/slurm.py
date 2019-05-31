@@ -15,7 +15,7 @@ from path import Path
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
 from mrunner.plgrid import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
 from mrunner.utils.namesgenerator import id_generator
-from mrunner.utils.neptune import NeptuneToken
+# from mrunner.utils.neptune import NeptuneToken
 from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
@@ -175,14 +175,14 @@ class SRunWrapperCmd(SlurmWrappersCmd):
         self._cmd = 'srun'
 
 
-class SlurmNeptuneToken(NeptuneToken):
-
-    def __init__(self, experiment):
-        # TODO: need refactor other part of code - here expereiment can be dict or backend specific object
-        user_id = experiment['user_id'] if isinstance(experiment, dict) else experiment.user_id
-        profile_name = '{}-{}'.format(user_id, socket.gethostname())
-        super(SlurmNeptuneToken, self).__init__(profile=profile_name)
-
+# class SlurmNeptuneToken(NeptuneToken):
+#
+#     def __init__(self, experiment):
+#         # TODO: need refactor other part of code - here expereiment can be dict or backend specific object
+#         user_id = experiment['user_id'] if isinstance(experiment, dict) else experiment.user_id
+#         profile_name = '{}-{}'.format(user_id, socket.gethostname())
+#         super(SlurmNeptuneToken, self).__init__(profile=profile_name)
+#
 
 class SlurmBackend(object):
 
@@ -231,6 +231,8 @@ class SlurmBackend(object):
         return remote_script_path
 
     def deploy_neptune_token(self, experiment):
+        return
+        #TODO(pm): remove me please
         if experiment.local_neptune_token:
             remote_token = SlurmNeptuneToken(experiment=experiment)
             self._ensure_dir(remote_token.path.parent)

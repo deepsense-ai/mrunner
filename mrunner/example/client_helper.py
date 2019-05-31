@@ -5,7 +5,7 @@ import argparse
 import os
 import socket
 from munch import Munch
-import yaml
+import cloudpickle
 neptune_logger_on = False
 
 
@@ -31,8 +31,8 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
   # TODO(pm): why not make mrunner to pickle experiment so that we do not have to homogenize here
   if commandline_args.config:
     print("File to load:{}".format(commandline_args.config))
-    with open(commandline_args.config, "r") as f:
-      experiment = Munch(yaml.load(f))
+    with open(commandline_args.config, "rb") as f:
+      experiment = Munch(cloudpickle.load(f))
     params = Munch(experiment['parameters'])
 
   if with_neptune:

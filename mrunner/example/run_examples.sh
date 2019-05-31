@@ -22,7 +22,7 @@ echo "Activate mrunner virtual env."
 source /tmp/example_venv/bin/activate
 
 
-if $RUN_LOCAL ; then
+if $RUN_LOCAL; then
     echo "Run experiments locally"
     python3 experiment_basic.py --ex experiment_basic_conf.py
     echo "=================================================================="
@@ -31,3 +31,8 @@ if $RUN_LOCAL ; then
 
 fi
 
+if $RUN_PROMETHEUS; then
+    echo "Run experiments on prometheus."
+
+    mrunner --config /tmp/mrunner_config.yaml --context plgrid_cpu run experiment_basic_conf.py
+fi

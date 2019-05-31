@@ -7,10 +7,10 @@ import click
 from path import Path
 
 from mrunner.backends.k8s import KubernetesBackend
-from mrunner.backends.slurm import SlurmBackend, SlurmNeptuneToken
+from mrunner.backends.slurm import SlurmBackend#, SlurmNeptuneToken
 from mrunner.cli.config import ConfigParser, context as context_cli
 from mrunner.experiment import generate_experiments, get_experiments_spec_handle
-from mrunner.utils.neptune import NeptuneWrapperCmd, NeptuneToken, NEPTUNE_LOCAL_VERSION
+from mrunner.utils.neptune import NeptuneWrapperCmd#, NeptuneToken, NEPTUNE_LOCAL_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -89,21 +89,25 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
     if context['backend_type'] == 'kubernetes' and not requirements_file:
         raise click.ClickException('Provide requirements.txt file')
     script_has_spec = get_experiments_spec_handle(script, spec) is not None
+    # TODO(pm): remove neptune
     neptune_support = context.get('neptune', None) or neptune
+    neptune_support = False
     if neptune_support and not neptune and not script_has_spec:
         raise click.ClickException('Neptune support is enabled in context '
                                    'but no neptune config or python experiment descriptor provided')
     if neptune and script_has_spec:
         raise click.ClickException('Provide only one of: neptune config or python experiment descriptor')
 
-    if not neptune_support:
-        # TODO: implement it if possible
-        raise click.ClickException('Currentlu doesn\'t support experiments without neptune')
+    # if not neptune_support:
+    #     # TODO(pm): implement it if possible :)
+    #     raise click.ClickException('Currently doesn\'t support experiments without neptune')
 
     neptune_dir = None
     try:
         # prepare neptune directory in case if neptune yamls shall be generated
-        if neptune_support and not neptune:
+        # if neptune_support and not neptune:
+        # TODO(pm):refactor me please
+        if True:
             script_path = Path(script)
             neptune_dir = script_path.parent / 'neptune_{}'.format(script_path.stem)
             neptune_dir.makedirs_p()
@@ -113,6 +117,8 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
 
             experiment.update({'base_image': base_image, 'requirements': requirements})
 
+            # TODO(pm):remove me please
+            neptune_support = True
             if neptune_support:
                 script = experiment.pop('script')
                 cmd = ' '.join([script] + list(params))
@@ -120,15 +126,15 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
                 additional_tags = context.get('tags', []) + list(tags)
 
                 remote_neptune_token = None
-                if NEPTUNE_LOCAL_VERSION.version[0] == 2:
-                    experiment['local_neptune_token'] = NeptuneToken()
-                    assert experiment['local_neptune_token'].path.expanduser().exists(), \
-                        'Login to neptune first with `neptune account login` command'
-
-                    remote_neptune_token = {
-                        'kubernetes': NeptuneToken,
-                        'slurm': lambda: SlurmNeptuneToken(experiment)
-                    }[experiment['backend_type']]()
+                # if NEPTUNE_LOCAL_VERSION.version[0] == 2:
+                #     experiment['local_neptune_token'] = NeptuneToken()
+                #     assert experiment['local_neptune_token'].path.expanduser().exists(), \
+                #         'Login to neptune first with `neptune account login` command'
+                #
+                #     remote_neptune_token = {
+                #         'kubernetes': NeptuneToken,
+                #         'slurm': lambda: SlurmNeptuneToken(experiment)
+                #     }[experiment['backend_type']]()
 
                 neptune_profile_name = remote_neptune_token.profile_name if remote_neptune_token else None
                 experiment['cmd'] = NeptuneWrapperCmd(cmd=cmd, experiment_config_path=neptune_path,

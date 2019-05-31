@@ -7,6 +7,7 @@ import warnings
 import attr
 import six
 from path import Path
+import cloudpickle
 
 from mrunner.utils.namesgenerator import id_generator, get_random_name
 # from mrunner.utils.neptune import NeptuneConfigFileV1, NeptuneConfigFileV2, load_neptune_config, NEPTUNE_LOCAL_VERSION, \
@@ -120,6 +121,14 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
         LOGGER.debug('Generated neptune file {}: {}'.format(neptune_path, Path(neptune_path).text()))
         return neptune_path
 
+    def _new_dump(cli_params, neptune_dir):
+        config_path = neptune_dir / 'config-{}-{}.pkl'.format(get_random_name(), id_generator(4))
+
+        with open(config_path, "wb") as file:
+            cloudpickle.dump(cli_params, file)
+        return config_path
+
+
     spec_fun = get_experiments_spec_handle(script, spec)
     for experiment in spec_fun():
         if isinstance(experiment, dict):
@@ -128,7 +137,9 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
             experiment = NeptuneExperiment(**experiment.__dict__)
         cli_params = experiment.to_dict()
 
-        neptune_path = _dump_to_neptune(cli_params, neptune_dir) if neptune_support else None
+        #TODO(pm): remove me please
+        # neptune_path = _dump_to_neptune(cli_params, neptune_dir) if neptune_support else None
+        neptune_path = _new_dump(cli_params, neptune_dir)
 
         # TODO: possibly part of this shall not be removed on experiments without neptune support
         cli_params.pop('parameters', None)
@@ -149,7 +160,6 @@ def generate_experiments(script, neptune, context, *, spec='spec',
                                                                      neptune_version=neptune_version)
     else:
         # TODO(pm): refactor!
-        assert False, "Should not get here."
         neptune_config = load_neptune_config(neptune)
         experiments = [(neptune, {'script': script, 'name': neptune_config['name']})]
 
@@ -168,6 +178,7 @@ def generate_experiments(script, neptune, context, *, spec='spec',
 
 
 _spec_fun = None
+
 
 def get_experiments_spec_handle(script, spec):
     global _spec_fun
