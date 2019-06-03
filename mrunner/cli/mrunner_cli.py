@@ -9,7 +9,7 @@ from path import Path
 from mrunner.backends.k8s import KubernetesBackend
 from mrunner.backends.slurm import SlurmBackend#, SlurmNeptuneToken
 from mrunner.cli.config import ConfigParser, context as context_cli
-from mrunner.experiment import generate_experiments, get_experiments_spec_handle
+from mrunner.experiment import generate_experiments, get_experiments_list
 from mrunner.utils.neptune import NeptuneWrapperCmd#, NeptuneToken, NEPTUNE_LOCAL_VERSION
 
 LOGGER = logging.getLogger(__name__)
@@ -88,19 +88,6 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
         raise click.ClickException('Provide docker base image')
     if context['backend_type'] == 'kubernetes' and not requirements_file:
         raise click.ClickException('Provide requirements.txt file')
-    script_has_spec = get_experiments_spec_handle(script, spec) is not None
-    # TODO(pm): remove neptune
-    neptune_support = context.get('neptune', None) or neptune
-    neptune_support = False
-    if neptune_support and not neptune and not script_has_spec:
-        raise click.ClickException('Neptune support is enabled in context '
-                                   'but no neptune config or python experiment descriptor provided')
-    if neptune and script_has_spec:
-        raise click.ClickException('Provide only one of: neptune config or python experiment descriptor')
-
-    # if not neptune_support:
-    #     # TODO(pm): implement it if possible :)
-    #     raise click.ClickException('Currently doesn\'t support experiments without neptune')
 
     neptune_dir = None
     try:

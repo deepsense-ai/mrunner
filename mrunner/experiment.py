@@ -129,8 +129,8 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
         return config_path
 
 
-    spec_fun = get_experiments_spec_handle(script, spec)
-    for experiment in spec_fun():
+    experiments_list = get_experiments_list(script, spec)
+    for experiment in experiments_list:
         if isinstance(experiment, dict):
             experiment = NeptuneExperiment(**experiment)
         elif not hasattr(experiment, 'to_dict'):
@@ -153,15 +153,9 @@ def _load_py_experiment_and_generate_neptune_yamls(script, spec, *, neptune_dir,
 
 def generate_experiments(script, neptune, context, *, spec='spec',
                          neptune_dir=None, neptune_version=None, **cli_kwargs):
-    spec_fun = get_experiments_spec_handle(script, spec)
-    if spec_fun:
-        experiments = _load_py_experiment_and_generate_neptune_yamls(script, spec=spec,
-                                                                     neptune_dir=neptune_dir,
-                                                                     neptune_version=neptune_version)
-    else:
-        # TODO(pm): refactor!
-        neptune_config = load_neptune_config(neptune)
-        experiments = [(neptune, {'script': script, 'name': neptune_config['name']})]
+    experiments = _load_py_experiment_and_generate_neptune_yamls(script, spec=spec,
+                                                                 neptune_dir=neptune_dir,
+                                                                 neptune_version=neptune_version)
 
     for neptune_path, cli_kwargs_ in experiments:
         cli_kwargs_['name'] = re.sub(r'[ .,_-]+', '-', cli_kwargs_['name'].lower())
@@ -177,19 +171,17 @@ def generate_experiments(script, neptune, context, *, spec='spec',
         yield neptune_path, experiment
 
 
-_spec_fun = None
+_experiment_list = None
 
+def get_experiments_list(script, spec):
+    global _experiment_list
+    if _experiment_list is None:
+        vars = {'script':  str(Path(script).name)}
+        exec(open(script).read(), vars)
+        _experiment_list = vars.get(spec, None)
+        if _experiment_list is None:
+            print("The expriement file was loaded but the {} "
+                  "variable is not set. Exiting".format(spec))
+            exit(1)
 
-def get_experiments_spec_handle(script, spec):
-    global _spec_fun
-    if _spec_fun is not None:
-        return _spec_fun
-
-    vars = {'script':  str(Path(script).name)}
-    exec(open(script).read(), vars)
-    spec_fun = vars.get(spec, None)
-    if not callable(spec_fun):
-        spec_fun = None
-
-    _spec_fun = spec_fun
-    return spec_fun
+    return _experiment_list

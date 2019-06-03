@@ -24,8 +24,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
     from path import Path
     vars = {'script': str(Path(commandline_args.ex).name)}
     exec(open(commandline_args.ex).read(), vars)
-    spec_func = vars['spec']
-    experiments = spec_func()
+    experiments = vars['spec']
     print("The specifcation file contains {} "
           "experiments configurations. The first one will be used.".format(len(experiments)))
     experiment = experiments[0]
@@ -47,7 +46,14 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
       neptune.init(project_qualified_name=experiment.project)
       neptune.create_experiment(name=experiment.name)
       for name in params:
-        neptune.set_property(name, params[name])
+
+        try:
+          neptune.set_property(name, str(params[name]))
+        except:
+          try:
+            neptune.set_property(name, str(params[name]))
+          except:
+            neptune.set_property(name, "Not possible to send to neptune. Implment __rep__")
 
       import atexit
       atexit.register(neptune.stop)
