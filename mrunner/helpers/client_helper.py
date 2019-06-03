@@ -25,7 +25,10 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
     vars = {'script': str(Path(commandline_args.ex).name)}
     exec(open(commandline_args.ex).read(), vars)
     spec_func = vars['spec']
-    experiment = spec_func()[0] #take just the first experiment for testing
+    experiments = spec_func()
+    print("The specifcation file contains {} "
+          "experiments configurations. The first one will be used.".format(len(experiments)))
+    experiment = experiments[0]
     params = experiment.parameters
 
   # TODO(pm): why not make mrunner to pickle experiment so that we do not have to homogenize here
