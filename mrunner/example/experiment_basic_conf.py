@@ -23,7 +23,7 @@ def spec():
     tags = ['test_experiments']
 
     env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]}
-    parameters = Munch(param1=10)
+    parameters = Munch(param1=10, param3=None)
 
     exp = Experiment(project=project_name, name=name, script=script,
                      parameters=parameters, python_path=python_path,
