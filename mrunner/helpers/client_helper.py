@@ -54,7 +54,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
   if print_diagnostics:
     print("PYTHONPATH:{}".format(os.environ.get('PYTHONPATH', 'not_defined')))
     print("cd {}".format(os.getcwd()))
-    print(socket.gethostname())
+    print(socket.getfqdn())
     print("Params:{}".format(params))
 
   return params
