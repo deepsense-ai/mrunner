@@ -1,5 +1,5 @@
 neptune-client
-git+https://github.com/deepsense-ai/mrunner.git
+git+https://github.com/deepsense-ai/mrunner.git@new_neptune
 munch
 psutil
 cloudpickle
