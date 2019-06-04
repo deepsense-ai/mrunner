@@ -24,7 +24,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
     from path import Path
     vars = {'script': str(Path(commandline_args.ex).name)}
     exec(open(commandline_args.ex).read(), vars)
-    experiments = vars['spec']
+    experiments = vars['experiments_list']
     print("The specifcation file contains {} "
           "experiments configurations. The first one will be used.".format(len(experiments)))
     experiment = experiments[0]

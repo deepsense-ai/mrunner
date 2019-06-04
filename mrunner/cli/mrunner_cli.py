@@ -70,7 +70,7 @@ def cli(ctx, debug, config, context):
 
 @cli.command()
 @click.option('--neptune', type=click.Path(), help="Path to neptune experiment config")
-@click.option('--spec', default='spec', help="Name of function providing experiment specification")
+@click.option('--spec', default='experiments_list', help="Name of function providing experiment specification")
 @click.option('--tags', multiple=True, help='Additional tags')
 @click.option('--requirements_file', type=click.Path(), help='Path to requirements file')
 @click.option('--base_image', help='Base docker image used in experiment')
