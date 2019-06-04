@@ -9,14 +9,18 @@ echo "=================================================================="
 RUN_LOCAL=FALSE
 RUN_PROMETHEUS=FALSE
 RUN_EAGLE=FALSE
+RUN_PROMETHEUS_SBATCH=FALSE
+RUN_EAGLE_SBATCH=FALSE
+
 
 echo "Should we run?"
-select yn in "Locally" "Prometheus" "Eagle" "All"; do
+select yn in "Locally" "Prometheus" "Eagle" "Prometheus_sbatch" "Eagle_sbatch"; do
     case $yn in
         "Locally" ) RUN_LOCAL=TRUE;break;;
         "Prometheus" ) RUN_PROMETHEUS=TRUE;break;;
         "Eagle" ) RUN_EAGLE=TRUE;break;;
-        "All" ) RUN_PROMETHEUS=TRUE;RUN_LOCAL=TRUE;RUN_EAGLE=True;break;;
+        "Prometheus_sbatch" ) RUN_PROMETHEUS_SBATCH=TRUE;break;;
+        "Eagle_sbatch" ) RUN_EAGLE_SBATCH=TRUE;break;;
     esac
 done
 
@@ -49,5 +53,21 @@ if $RUN_EAGLE; then
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_basic_conf.py
     mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_helper_conf.py
+    set +o xtrace
+fi
+
+if $RUN_PROMETHEUS_SBATCH; then
+    echo "Run experiments on prometheus with sbatch."
+    set -o xtrace
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_helper_conf.py
+    set +o xtrace
+fi
+
+if $RUN_EAGLE_SBATCH; then
+    echo "Run experiments on eagle with sbatch."
+    set -o xtrace
+    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu_sbatch run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu_sbatch run experiment_helper_conf.py
     set +o xtrace
 fi
