@@ -38,12 +38,16 @@ fi
 
 if $RUN_PROMETHEUS; then
     echo "Run experiments on prometheus."
-
+    set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_helper_conf.py
+    set +o xtrace
 fi
 
 if $RUN_EAGLE; then
     echo "Run experiments on eagle."
-
+    set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_helper_conf.py
+    set +o xtrace
 fi
