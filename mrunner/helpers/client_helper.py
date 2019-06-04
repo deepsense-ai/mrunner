@@ -44,7 +44,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
       neptune_logger_on = True
       import neptune
       neptune.init(project_qualified_name=experiment.project)
-      neptune.create_experiment(name=experiment.name)
+      neptune.create_experiment(name=experiment.name, tags=experiment.tags)
       for name in params:
 
         try:
