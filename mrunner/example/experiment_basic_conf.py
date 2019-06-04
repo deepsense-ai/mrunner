@@ -15,7 +15,7 @@ exp = Experiment(name='experiment basic',
                  tags=['test_experiments'],
                  env={"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]},
                  python_path='.', paths_to_dump='',
-                 parameters=Munch(param1=10, param3=None),
+                 parameters=Munch(param1=10),
                  time='0-0:10')
 
 # Only one experiment here

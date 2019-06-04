@@ -48,12 +48,12 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
       for name in params:
 
         try:
-          neptune.set_property(name, str(params[name]))
+          neptune.set_property(name, params[name])
         except:
           try:
             neptune.set_property(name, str(params[name]))
           except:
-            neptune.set_property(name, "Not possible to send to neptune. Implment __rep__")
+            neptune.set_property(name, "Not possible to send to neptune. Implement __str__")
 
       import atexit
       atexit.register(neptune.stop)

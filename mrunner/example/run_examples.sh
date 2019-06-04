@@ -26,9 +26,12 @@ source /tmp/example_venv/bin/activate
 
 if $RUN_LOCAL; then
     echo "Run experiments locally"
+    set -o xtrace
     python3 experiment_basic.py --ex experiment_basic_conf.py
+    python3 experiment_basic.py --ex experiment_helper_conf.py
+    set +o xtrace
     echo "=================================================================="
-    echo "Your first experiment has run successfully. Check it in neptune."
+    echo "Your first experiments have run successfully. Check them in neptune."
     echo "=================================================================="
 
 fi
