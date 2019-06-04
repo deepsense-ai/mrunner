@@ -54,10 +54,10 @@ function prepare_mrunner_config {
 
 function prepare_envs_and_mrunner_config {
     if [ -z "$PROMETHEUS_LOGIN" ]; then echo "PROMETHEUS_LOGIN must be set. exiting";exit; fi
-#    prepare_local_venv
-#    prepare_remote_venv_prometheus
+       prepare_local_venv
+       prepare_remote_venv_prometheus
 #    prepare_remote_venv_eagle
-    prepare_mrunner_config
+      prepare_mrunner_config
 }
 
 echo "=================================================================="
