@@ -4,6 +4,7 @@
 
 set -e
 export PROMETHEUS_LOGIN=$1
+export GRANT_NAME=$2
 
 function prepare_local_venv {
     ENV_DIR=/tmp/example_venv
@@ -45,7 +46,10 @@ function prepare_mrunner_config {
     echo "Preparing mrunner config in /tmp/mrunner_config.yaml"
     echo "=================================================================="
 
-    sed "s/<username>/$PROMETHEUS_LOGIN/g" resources/prometheus_config_template.yaml > /tmp/mrunner_config.yaml
+    sed "s/<username>/$PROMETHEUS_LOGIN/g" resources/prometheus_config_template.yaml > /tmp/mrunner_config_1.yaml
+    sed "s/<grantname>/$GRANT_NAME/g" /tmp/mrunner_config_1.yaml > /tmp/mrunner_config.yaml
+
+    rm /tmp/mrunner_config_1.yaml
 
     cat /tmp/mrunner_config.yaml
 
