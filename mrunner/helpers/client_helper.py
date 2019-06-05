@@ -9,7 +9,7 @@ import cloudpickle
 neptune_logger_on = False
 
 
-def get_configuration(print_diagnostics=False, with_neptune=False):
+def get_configuration(print_diagnostics=False, with_neptune=False, inject_parameters_to_gin=False):
   global neptune_logger_on
 
   parser = argparse.ArgumentParser(description='Debug run.')
@@ -36,6 +36,14 @@ def get_configuration(print_diagnostics=False, with_neptune=False):
     with open(commandline_args.config, "rb") as f:
       experiment = Munch(cloudpickle.load(f))
     params = Munch(experiment['parameters'])
+
+  if inject_parameters_to_gin:
+    print("The parameters of the form 'aaa.bbb' will be injected to gin.")
+    import gin
+    for param_name in params:
+      if "." in param_name:
+        gin.bind_parameter(param_name, params[param_name])
+
 
   if with_neptune:
     if 'NEPTUNE_API_TOKEN' not in os.environ:
