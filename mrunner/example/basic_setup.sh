@@ -38,7 +38,7 @@ function prepare_remote_venv_eagle {
     scp resources/setup_remote_env.sh $PROMETHEUS_LOGIN@eagle.man.poznan.pl:
 
     ssh $PROMETHEUS_LOGIN@eagle.man.poznan.pl chmod +x setup_remote_env.sh
-    ssh $PROMETHEUS_LOGIN@eagle.man.poznan.pl srun -p plgrid-testing ./setup_remote_env.sh
+    ssh $PROMETHEUS_LOGIN@eagle.man.poznan.pl srun -p plgrid-testing -c 1 -t 00:15:00 ./setup_remote_env.sh
 }
 
 function prepare_mrunner_config {
@@ -58,10 +58,10 @@ function prepare_mrunner_config {
 
 function prepare_envs_and_mrunner_config {
     if [ -z "$PROMETHEUS_LOGIN" ]; then echo "PROMETHEUS_LOGIN must be set. exiting";exit; fi
-       prepare_local_venv
-       prepare_remote_venv_prometheus
-#    prepare_remote_venv_eagle
-      prepare_mrunner_config
+#       prepare_local_venv
+#       prepare_remote_venv_prometheus
+       prepare_remote_venv_eagle
+#      prepare_mrunner_config
 }
 
 echo "=================================================================="
