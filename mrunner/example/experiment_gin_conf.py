@@ -7,10 +7,7 @@ if "NEPTUNE_API_TOKEN" not in os.environ or "PROJECT_QUALIFIED_NAME" not in os.e
     print("Their values can be from up.neptune.ml. Click help and then quickstart.")
     exit()
 
-
-# These values will be use as defaults
 base_config = dict(param1=10)
-
 params_grid = {"LinearFunction.coefficient": [1.0, 2.0]}
 
 experiments_list = create_experiments_helper(experiment_name='Gin experiment',

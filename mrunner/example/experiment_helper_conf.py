@@ -8,7 +8,7 @@ if "NEPTUNE_API_TOKEN" not in os.environ or "PROJECT_QUALIFIED_NAME" not in os.e
     exit()
 
 
-# These values will be use as defaults
+# These values will be used as defaults
 base_config = dict(param1=10, param2="string", param3=None)
 
 # These will be gridded

@@ -18,5 +18,5 @@ exp = Experiment(name='Basic experiment',
                  parameters=Munch(param1=10),
                  time='0-0:10')
 
-#A specification file must contain list of experiments in experiments_list variable. Here just one.
+# A specification file must contain list of experiments in experiments_list variable. Here just one.
 experiments_list = [exp]
