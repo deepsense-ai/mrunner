@@ -47,6 +47,8 @@ if $RUN_PROMETHEUS; then
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_basic_conf.py
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_helper_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_gin_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_mpi run experiment_mpi_conf.py
     set +o xtrace
 fi
 
@@ -63,6 +65,9 @@ if $RUN_PROMETHEUS_SBATCH; then
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_basic_conf.py
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_helper_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_gin_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch_mpi run experiment_mpi_conf.py
+
     set +o xtrace
 fi
 

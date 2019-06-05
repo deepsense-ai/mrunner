@@ -3,3 +3,4 @@ git+https://github.com/deepsense-ai/mrunner.git@new_neptune
 munch
 cloudpickle
 gin-config
+mpi4py
