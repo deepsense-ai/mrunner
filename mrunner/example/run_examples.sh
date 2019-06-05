@@ -33,6 +33,8 @@ if $RUN_LOCAL; then
     set -o xtrace
     python3 experiment_basic.py --ex experiment_basic_conf.py
     python3 experiment_basic.py --ex experiment_helper_conf.py
+    python3 expeirment_gin.py --ex experiment_gin.py
+    mpirun python3 experiment_mpi.py --ex experiment_mpi_conf.py
     set +o xtrace
     echo "=================================================================="
     echo "Your first experiments have run successfully. Check them in neptune."

@@ -4,3 +4,4 @@ munch
 psutil
 cloudpickle
 gin-config
+mpi4py
