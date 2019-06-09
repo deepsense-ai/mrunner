@@ -9,7 +9,7 @@ module load {{ module_name }}
 {%- endif %}
 if [ ! -f {{ experiment.venv }}/bin/activate ]; then
     echo "Virtual env does not exists. Trying to setup"
-    echo "Works only with python3
+    echo "Works only with python3"
     python3 -m venv {{ experiment.venv }}
 fi
 source {{ experiment.venv }}/bin/activate
