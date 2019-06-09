@@ -176,7 +176,10 @@ _experiment_list = None
 def get_experiments_list(script, spec):
     global _experiment_list
     if _experiment_list is None:
-        vars = {'script':  str(Path(script).name)}
+        vars = {
+            'script': str(Path(script).name),
+            '__file__': str(Path(script)),
+        }
         exec(open(script).read(), vars)
         _experiment_list = vars.get(spec, None)
         if _experiment_list is None:
