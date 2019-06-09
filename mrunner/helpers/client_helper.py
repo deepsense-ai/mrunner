@@ -40,6 +40,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
   if inject_parameters_to_gin:
     print("The parameters of the form 'aaa.bbb' will be injected to gin.")
     import gin
+    import gin.tf.external_configurables
     for param_name in params:
       if "." in param_name:
         gin.bind_parameter(param_name, params[param_name])
