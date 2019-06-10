@@ -28,7 +28,7 @@ echo "Activate mrunner virtual env."
 source /tmp/example_venv/bin/activate
 
 
-if [ -v $RUN_LOCAL ]; then
+if [ ! -z "$RUN_LOCAL" ]; then
     echo "Run experiments locally"
     set -o xtrace
     python3 experiment_basic.py --ex experiment_basic_conf.py
@@ -42,7 +42,7 @@ if [ -v $RUN_LOCAL ]; then
 
 fi
 
-if [ -v $RUN_PROMETHEUS ]; then
+if [ ! -z "$RUN_PROMETHEUS" ]; then
     echo "Run experiments on prometheus."
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_basic_conf.py
@@ -52,7 +52,7 @@ if [ -v $RUN_PROMETHEUS ]; then
     set +o xtrace
 fi
 
-if [ -v $RUN_EAGLE ]; then
+if [ ! -z "$RUN_EAGLE" ]; then
     echo "Run experiments on eagle."
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_basic_conf.py
@@ -60,7 +60,7 @@ if [ -v $RUN_EAGLE ]; then
     set +o xtrace
 fi
 
-if [ -v $RUN_PROMETHEUS_SBATCH ]; then
+if [ ! -z "$RUN_PROMETHEUS_SBATCH" ]; then
     echo "Run experiments on prometheus with sbatch."
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_basic_conf.py
@@ -71,7 +71,7 @@ if [ -v $RUN_PROMETHEUS_SBATCH ]; then
     set +o xtrace
 fi
 
-if [ -v $RUN_EAGLE_SBATCH ]; then
+if [ ! -z "$RUN_EAGLE_SBATCH" ]; then
     echo "Run experiments on eagle with sbatch."
     set -o xtrace
     mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu_sbatch run experiment_basic_conf.py
