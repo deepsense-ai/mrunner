@@ -8,6 +8,8 @@
      - plgrid/tools/python/3.6.5
      neptune: true
      partition: plgrid-testing
+     requirements_file: resources/requirements_remote.txt
+     time: 59
      resources:
        cpu: 2
        mem: 5G
@@ -24,6 +26,8 @@
      modules_to_load:
      neptune: true
      partition: plgrid-testing
+     requirements_file: resources/requirements_remote.txt
+     time: 59
      resources:
        cpu: 2
        mem: 5G
@@ -41,6 +45,8 @@
        - plgrid/tools/python/3.6.5
      neptune: true
      partition: plgrid-testing
+     requirements_file: resources/requirements_remote.txt
+     time: 59
      resources:
        cpu: 2
        mem: 5G
@@ -57,6 +63,8 @@
      modules_to_load:
      neptune: true
      partition: plgrid-testing
+     requirements_file: resources/requirements_remote.txt
+     time: 59
      resources:
        cpu: 2
        mem: 5G
@@ -76,6 +84,8 @@
      neptune: true
      partition: plgrid-testing
      ntasks: 2
+     requirements_file: resources/requirements_remote.txt
+     time: 59
      resources:
        cpu: 2
        mem: 5G
@@ -94,7 +104,9 @@
      - plgrid/tools/openmpi/3.0.0-gcc-4.9.2
      neptune: true
      partition: plgrid-testing
+     requirements_file: resources/requirements_remote.txt
      ntasks: 2 #Note that number of cpus will be divided by ntasks
+     time: 59
      resources:
        cpu: 2
        mem: 5G
