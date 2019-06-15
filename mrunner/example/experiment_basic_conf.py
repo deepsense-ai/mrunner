@@ -15,8 +15,7 @@ exp = Experiment(name='Basic experiment',
                  tags=['test_experiments'],
                  env={"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]},
                  python_path='.', paths_to_dump='',
-                 parameters=Munch(param1=10),
-                 time='0-0:10')
+                 parameters=Munch(param1=10))
 
 # A specification file must contain list of experiments in experiments_list variable. Here just one.
 experiments_list = [exp]

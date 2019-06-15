@@ -11,7 +11,7 @@ from mrunner.backends.slurm import SlurmBackend#, SlurmNeptuneToken
 from mrunner.cli.config import ConfigParser, context as context_cli
 from mrunner.experiment import generate_experiments, get_experiments_list
 from mrunner.utils.neptune import NeptuneWrapperCmd#, NeptuneToken, NEPTUNE_LOCAL_VERSION
-
+from pprint import pformat
 LOGGER = logging.getLogger(__name__)
 
 
@@ -27,10 +27,16 @@ def get_default_config_path(ctx):
 @click.option('--debug/--no-debug', default=False, help='Enable debug messages')
 @click.option('--config', default=None, type=click.Path(dir_okay=False),
               help='Path to mrunner yaml configuration')
+@click.option('--cpu', default=None, type=int, help='Number of cpus to use')
+@click.option('--mem', default=None, type=str, help='Amount of memory. E.g. 5G')
+@click.option('--time', default=None, type=int, help='Time in minutes')
+@click.option('--cmd_type', default=None, type=str, help='srun/sbatch')
+@click.option('--partition', default=None, type=str, help='partition to use')
+@click.option('--ntasks', default=None, type=str, help='ntasks')
 @click.option('--context', default=None, help='Name of remote context to use '
                                               '(if not provided, "contexts.current" conf key will be used)')
 @click.pass_context
-def cli(ctx, debug, config, context):
+def cli(ctx, debug, config, context, **kwargs):
     """Deploy experiments on computation cluster"""
 
     log_tags_to_suppress = ['pykwalify', 'docker', 'kubernetes', 'paramiko', 'requests.packages']
@@ -55,7 +61,16 @@ def cli(ctx, debug, config, context):
 
         try:
             context = config.contexts[context_name]
-            for k in ['neptune', 'storage_dir', 'backend_type', 'context_name']:
+            res = {k: v for k, v in kwargs.items() if v is not None}
+            context.update(res)
+            LOGGER.info("Config to be used:")
+            LOGGER.info("\n"+pformat(context))
+
+            LOGGER.info("")
+            LOGGER.info("You can change config from commandline. E.g. mrunner ... --cpu 5")
+            LOGGER.info("")
+            context['neptune'] = True #TODO(pm): This is a hack before cleaning up the rest of the code
+            for k in ['storage_dir', 'backend_type', 'context_name']:
                 if k not in context:
                     raise AttributeError('Missing required "{}" context key'.format(k))
         except KeyError:

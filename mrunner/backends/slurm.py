@@ -128,12 +128,17 @@ class SlurmWrappersCmd(object):
         return ' '.join(cmd_items)
 
     def _getattr(self, key):
-        return getattr(self, key, getattr(self._experiment, key) or None)
+        return getattr(self, key, getattr(self._experiment, key, None))
 
     def _resources_items(self):
         """mapping from mrunner notation into slurm"""
         cmd_items = []
-        mrunner_resources = self._getattr('resources')
+        # mrunner_resources = self._getattr('resources')
+        #TODO(pm): Refactor me please
+        mrunner_resources = {}
+        for resource_type in ['cpu', 'gpu', 'mem']:
+            if self._getattr(resource_type):
+                mrunner_resources[resource_type] = self._getattr(resource_type)
         for resource_type, resource_qty in mrunner_resources.items():
             if resource_type == 'cpu':
                 ntasks = int(self._getattr('ntasks') or 1)

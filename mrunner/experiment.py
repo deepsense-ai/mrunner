@@ -28,7 +28,9 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('exclude', dict(default=None, type=list)),
     ('paths_to_copy', dict(default=attr.Factory(list), type=list)),
     ('env', dict(default=attr.Factory(dict), type=dict)),
-    ('resources', dict(default=attr.Factory(dict), type=dict)),
+    ('cpu', dict(default=attr.Factory(dict), type=dict)),
+    ('mem', dict(default=attr.Factory(dict), type=dict)),
+    ('gpu', dict(default=attr.Factory(dict), type=dict)),
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
 ]
 
