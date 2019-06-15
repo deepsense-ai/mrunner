@@ -32,14 +32,13 @@ def generate_experiment_scratch_dir(experiment):
 
 
 def generate_project_scratch_dir(experiment):
-    project_subdir = '{user_id}_{project}'.format(user_id=experiment.user_id, project=experiment.project)
+    project_subdir = '{project}'.format(project=experiment.project)
     scratch_subdir = (experiment.scratch_subdir or DEFAULT_SCRATCH_SUBDIR)
     return Path(experiment._slurm_scratch_dir) / scratch_subdir / project_subdir
 
 
 EXPERIMENT_MANDATORY_FIELDS = [
     ('venv', dict()),  # path to virtual environment
-    ('user_id', dict()),  # used to generate project scratch dir
     ('_slurm_scratch_dir', dict())  # obtained from cluster $SCRATCH env
 ]
 

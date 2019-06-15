@@ -45,28 +45,28 @@ fi
 if [ ! -z "$RUN_PROMETHEUS" ]; then
     echo "Run experiments on prometheus."
     set -o xtrace
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_basic_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_helper_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_gin_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_mpi run experiment_mpi_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu --cmd_type srun run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu --cmd_type srun run experiment_helper_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu --cmd_type srun run experiment_gin_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_mpi --cmd_type srun run experiment_mpi_conf.py
     set +o xtrace
 fi
 
 if [ ! -z "$RUN_EAGLE" ]; then
     echo "Run experiments on eagle."
     set -o xtrace
-    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_basic_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu run experiment_helper_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu --cmd_type srun run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context eagle_cpu --cmd_type srun run experiment_helper_conf.py
     set +o xtrace
 fi
 
 if [ ! -z "$RUN_PROMETHEUS_SBATCH" ]; then
     echo "Run experiments on prometheus with sbatch."
     set -o xtrace
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_basic_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_helper_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch run experiment_gin_conf.py
-    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_sbatch_mpi run experiment_mpi_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_basic_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_helper_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu run experiment_gin_conf.py
+    mrunner --config /tmp/mrunner_config.yaml --context prometheus_cpu_mpi run experiment_mpi_conf.py
 
     set +o xtrace
 fi

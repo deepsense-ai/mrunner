@@ -70,7 +70,8 @@ def cli(ctx, debug, config, context, **kwargs):
             LOGGER.info("You can change config from commandline. E.g. mrunner ... --cpu 5")
             LOGGER.info("")
             context['neptune'] = True #TODO(pm): This is a hack before cleaning up the rest of the code
-            for k in ['storage_dir', 'backend_type', 'context_name']:
+            context['context_name'] = context_name #TODO(pm): This is probably never used
+            for k in ['storage_dir', 'backend_type']:
                 if k not in context:
                     raise AttributeError('Missing required "{}" context key'.format(k))
         except KeyError:
