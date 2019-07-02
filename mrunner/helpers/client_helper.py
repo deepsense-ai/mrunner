@@ -45,28 +45,39 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
       if "." in param_name:
         gin.bind_parameter(param_name, params[param_name])
 
-
   if with_neptune:
     if 'NEPTUNE_API_TOKEN' not in os.environ:
       print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
     else:
       neptune_logger_on = True
       import neptune
+
+      def neptune_set_property(key, value):
+        """Set property, cast value to str if needed
+
+        Note that neptune.set_property() might raise exception but also can
+        fail silently.
+        """
+        def set_property_assert_value(key, value):
+          neptune.set_property(key, value)
+          assert neptune.get_experiment().get_properties()[key] == value
+        try:
+          set_property_assert_value(key, value)
+        except:
+          try:
+            set_property_assert_value(key, str(value))
+          except:
+            neptune.set_property(
+              name, "Not possible to send to neptune. Implement __str__"
+            )
+
       neptune.init(project_qualified_name=experiment.project)
       neptune.create_experiment(name=experiment.name, tags=experiment.tags)
       for name in params:
-
-        try:
-          neptune.set_property(name, params[name])
-        except:
-          try:
-            neptune.set_property(name, str(params[name]))
-          except:
-            neptune.set_property(name, "Not possible to send to neptune. Implement __str__")
+        neptune_set_property(name, params[name])
 
       import atexit
       atexit.register(neptune.stop)
-
 
   # TODO(pm): find a way to pass metainformation
   if print_diagnostics:
