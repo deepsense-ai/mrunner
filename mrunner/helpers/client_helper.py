@@ -9,6 +9,36 @@ import cloudpickle
 neptune_logger_on = False
 
 
+
+def nest_params(params, prefixes):
+  """Nest params based od keys prefixes.
+
+  Example:
+    For input
+    params = dict(
+      param0=value0,
+      prefix0_param1=value1,
+      prefix0_param2=value2
+    )
+    prefixes = ("prefix0_",)
+    This method modifies params into nested dictionary:
+    {
+      "param0" : value0
+      "prefix0": {
+        "param1": value1,
+        "param2": value2
+      }
+    }
+  """
+  for prefix in prefixes:
+    dict_params = Munch()
+    l = len(prefix)
+    for k in list(params.keys()):
+      if k.startswith(prefix):
+        dict_params[k[l:]] = params.pop(k)
+    params[prefix[:-1]] = dict_params
+
+
 def neptune_set_property(key, value):
   """Set property, cast value to str if needed
 
@@ -30,7 +60,11 @@ def neptune_set_property(key, value):
         name, "Not possible to send to neptune. Implement __str__"
       )
 
-def get_configuration(print_diagnostics=False, with_neptune=False, inject_parameters_to_gin=False):
+
+def get_configuration(
+        print_diagnostics=False, with_neptune=False,
+        inject_parameters_to_gin=False, nesting_prefixes=()
+):
   global neptune_logger_on
 
   parser = argparse.ArgumentParser(description='Debug run.')
@@ -98,6 +132,8 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
     print("cd {}".format(os.getcwd()))
     print(socket.getfqdn())
     print("Params:{}".format(params))
+
+  nest_params(params, nesting_prefixes)
 
   return params
 
