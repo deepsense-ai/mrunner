@@ -57,6 +57,7 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('log_output_path', dict(default=None)),
     ('time', dict(default=None)),
     ('ntasks', dict(default=None)),
+    ('nodes', dict(default=None)),
     ('modules_to_load', dict(default=attr.Factory(list), type=list)),
     ('after_module_load_cmd', dict(default='')),
     ('cmd_type', dict(default='srun')),
@@ -135,7 +136,7 @@ class SlurmWrappersCmd(object):
         # mrunner_resources = self._getattr('resources')
         #TODO(pm): Refactor me please
         mrunner_resources = {}
-        for resource_type in ['cpu', 'gpu', 'mem']:
+        for resource_type in ['cpu', 'gpu', 'mem', 'nodes']:
             if self._getattr(resource_type):
                 mrunner_resources[resource_type] = self._getattr(resource_type)
         for resource_type, resource_qty in mrunner_resources.items():
@@ -154,12 +155,14 @@ class SlurmWrappersCmd(object):
                     LOGGER.warning('Requested number of CPU is higher than recommended value {}/4'.format(
                         total_cpus, RECOMMENDED_CPUS_NUMBER))
                 LOGGER.debug('Using {}/{} CPU cores per_task/total'.format(cores_per_task, total_cpus))
-            elif resource_type == 'gpu':
+            elif resource_type == 'gpu': #TODO(PM): does not work at the moment
                 cmd_items += ['--gres', 'gpu:{}'.format(resource_qty)]
                 LOGGER.debug('Using {} gpu'.format(resource_qty))
             elif resource_type == 'mem':
                 cmd_items += ['--mem', str(resource_qty)]
                 LOGGER.debug('Using {} memory'.format(resource_qty))
+            elif resource_type == 'nodes':
+                cmd_items += ['--nodes', str(resource_qty)]
             else:
                 raise ValueError('Unsupported resource request: {}={}'.format(resource_type, resource_qty))
 
