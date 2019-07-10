@@ -7,6 +7,7 @@ import socket
 from munch import Munch
 import cloudpickle
 neptune_logger_on = False
+import ast
 
 
 def get_configuration(print_diagnostics=False, with_neptune=False, inject_parameters_to_gin=False):
@@ -53,16 +54,17 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
       neptune_logger_on = True
       import neptune
       neptune.init(project_qualified_name=experiment.project)
-      neptune.create_experiment(name=experiment.name, tags=experiment.tags)
-      for name in params:
-
+      params_to_sent_to_neptune = {}
+      for param_name in params:
         try:
-          neptune.set_property(name, params[name])
+          val = str(params[param_name])
+          if val.isnumeric():
+            val = ast.literal_eval(val)
+          params_to_sent_to_neptune[param_name] = val
         except:
-          try:
-            neptune.set_property(name, str(params[name]))
-          except:
-            neptune.set_property(name, "Not possible to send to neptune. Implement __str__")
+          print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
+
+      neptune.create_experiment(name=experiment.name, tags=experiment.tags, params=params)
 
       import atexit
       atexit.register(neptune.stop)
