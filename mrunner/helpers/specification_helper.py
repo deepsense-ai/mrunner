@@ -38,6 +38,9 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
   params_configurations = get_combinations(params_grid)
   experiments = []
 
+  if exclude_git_files:
+    exclude += [".git"]
+
   #Last chance to change something
   for callback in callbacks:
       callback(**locals())
