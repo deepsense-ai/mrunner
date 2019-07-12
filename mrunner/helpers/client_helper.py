@@ -65,7 +65,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
           print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
 
       neptune.create_experiment(name=experiment.name, tags=experiment.tags,
-                                params=params, git_info=experiment.git_info)
+                                params=params, git_info=experiment.get("git_info", None))
 
       import atexit
       atexit.register(neptune.stop)
