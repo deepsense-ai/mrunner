@@ -7,6 +7,10 @@ module load {{ module_name }}
 {%- if experiment.after_module_load_cmd %}
 {{ experiment.after_module_load_cmd }}
 {%- endif %}
+{%- for env_key, env_value in experiment.env.items() %}
+export {{ env_key }}={{ env_value }}
+{%- endfor %}
+{%- if experiment.venv %}
 if [ ! -f {{ experiment.venv }}/bin/activate ]; then
     echo "==============================================="
     echo "Virtual env does not exists. Trying to setup"
@@ -18,7 +22,9 @@ source {{ experiment.venv }}/bin/activate
 {%- if experiment.requirements_file %}
 pip install -r {{ experiment.requirements_file }}
 {%- endif %}
-{%- for env_key, env_value in experiment.env.items() %}
-export {{ env_key }}={{ env_value }}
-{%- endfor %}
 {{ experiment.cmd.command }}
+{%- endif %}
+
+{%- if experiment.singularity_container %}
+    singularity exec {{ experiment.singularity_container }} {{ experiment.cmd.command }}
+{%- endif %}

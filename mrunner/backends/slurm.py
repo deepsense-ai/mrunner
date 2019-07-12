@@ -38,7 +38,6 @@ def generate_project_scratch_dir(experiment):
 
 
 EXPERIMENT_MANDATORY_FIELDS = [
-    ('venv', dict()),  # path to virtual environment
     ('_slurm_scratch_dir', dict())  # obtained from cluster $SCRATCH env
 ]
 
@@ -61,7 +60,9 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('modules_to_load', dict(default=attr.Factory(list), type=list)),
     ('after_module_load_cmd', dict(default='')),
     ('cmd_type', dict(default='srun')),
-    ('requirements_file', dict(default=(None)))
+    ('requirements_file', dict(default=(None))),
+    ('venv', dict(default=(None))),  # path to virtual environment
+    ('singularity_container', dict(default=(None))),  # path to virtual environment
 ]
 
 EXPERIMENT_FIELDS = COMMON_EXPERIMENT_MANDATORY_FIELDS + EXPERIMENT_MANDATORY_FIELDS + \
@@ -203,6 +204,8 @@ class SlurmBackend(object):
         slurm_scratch_dir = experiment['storage_dir']
         experiment = ExperimentRunOnSlurm(slurm_scratch_dir=slurm_scratch_dir, slurm_url=slurm_url,
                                           **filter_only_attr(ExperimentRunOnSlurm, experiment))
+        assert experiment.venv is not None or experiment.singularity_container is not None, \
+            "Execution environment needs to be specified. venv or singularity_container"
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
