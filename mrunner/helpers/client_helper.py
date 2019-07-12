@@ -2,6 +2,7 @@
 
 
 import argparse
+import datetime
 import os
 import socket
 from munch import Munch
@@ -38,6 +39,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
       experiment = Munch(cloudpickle.load(f))
     params = Munch(experiment['parameters'])
 
+
   if inject_parameters_to_gin:
     print("The parameters of the form 'aaa.bbb' will be injected to gin.")
     import gin
@@ -53,6 +55,10 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
     else:
       neptune_logger_on = True
       import neptune
+      git_info = experiment.get("git_info", None)
+      if git_info:
+        git_info.commit_date = datetime.timedelta(0)
+
       neptune.init(project_qualified_name=experiment.project)
       params_to_sent_to_neptune = {}
       for param_name in params:
@@ -65,7 +71,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
           print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
 
       neptune.create_experiment(name=experiment.name, tags=experiment.tags,
-                                params=params, git_info=experiment.get("git_info", None))
+                                params=params, git_info=git_info)
 
       import atexit
       atexit.register(neptune.stop)
