@@ -4,6 +4,7 @@ from itertools import product
 from typing import List
 
 from munch import Munch
+from neptune.utils import get_git_info
 
 from mrunner.experiment import Experiment
 from mrunner.utils.namesgenerator import get_random_name
@@ -38,8 +39,10 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
   params_configurations = get_combinations(params_grid)
   experiments = []
 
+  git_info = None
   if exclude_git_files:
     exclude += [".git"]
+    git_info = get_git_info(".")
 
   #Last chance to change something
   for callback in callbacks:
@@ -54,7 +57,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
     experiments.append(Experiment(project=project_name, name=experiment_name, script=script,
                                   parameters=config, python_path=python_path,
                                   paths_to_dump=paths_to_dump, tags=tags, env=env,
-                                  exclude=exclude))
+                                  exclude=exclude, git_info=git_info))
 
   return experiments
 
