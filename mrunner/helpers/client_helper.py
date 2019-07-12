@@ -31,6 +31,7 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
           "experiments configurations. The first one will be used.".format(len(experiments)))
     experiment = experiments[0]
     params = experiment.parameters
+    git_info = None
 
   # TODO(pm): why not make mrunner to pickle experiment so that we do not have to homogenize here
   if commandline_args.config:
@@ -38,7 +39,9 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
     with open(commandline_args.config, "rb") as f:
       experiment = Munch(cloudpickle.load(f))
     params = Munch(experiment['parameters'])
-
+    git_info = experiment.get("git_info", None)
+    if git_info:
+      git_info.commit_date = datetime.datetime.now()
 
   if inject_parameters_to_gin:
     print("The parameters of the form 'aaa.bbb' will be injected to gin.")
@@ -55,9 +58,6 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
     else:
       neptune_logger_on = True
       import neptune
-      git_info = experiment.get("git_info", None)
-      if git_info:
-        git_info.commit_date = datetime.timedelta(0)
 
       neptune.init(project_qualified_name=experiment.project)
       params_to_sent_to_neptune = {}

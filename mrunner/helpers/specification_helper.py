@@ -43,8 +43,9 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
   if exclude_git_files:
     exclude += [".git"]
     git_info = get_git_info(".")
-    # Hack due to external bugs
-    git_info.commit_date = None
+    if git_info:
+      # Hack due to external bugs
+      git_info.commit_date = None
 
   #Last chance to change something
   for callback in callbacks:
