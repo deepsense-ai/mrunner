@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
+# import os
+# os.environ["SSH_AUTH_SOCK"]="/tmp/ssh-h64uxkoMjk31/agent.25841"
+# print(os.environ)
+
 
 import click
 from path import Path
@@ -28,6 +32,7 @@ def get_default_config_path(ctx):
 @click.option('--config', default=None, type=click.Path(dir_okay=False),
               help='Path to mrunner yaml configuration')
 @click.option('--cpu', default=None, type=int, help='Number of cpus to use')
+@click.option('--nodes', default=None, type=int, help='Number of nodes to use')
 @click.option('--mem', default=None, type=str, help='Amount of memory. E.g. 5G')
 @click.option('--time', default=None, type=int, help='Time in minutes')
 @click.option('--cmd_type', default=None, type=str, help='srun/sbatch')
