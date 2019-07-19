@@ -19,9 +19,9 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
                               exclude_git_files=True,
                               exclude=[], with_neptune=True,
                               update_lambda=lambda d1, d2: d1.update(d2),
-                              _script_name=None, callbacks=[]):
+                              callbacks=[]):
 
-
+  _script_name = globals()['script']
   _script_name = None if _script_name is None else pathlib.Path(_script_name).stem
   if _script_name:
     tags.append(_script_name)
