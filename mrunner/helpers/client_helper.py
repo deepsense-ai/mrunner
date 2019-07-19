@@ -12,7 +12,7 @@ import ast
 
 
 def nest_params(params, prefixes):
-  """Nest params based od keys prefixes.
+  """Nest params based on keys prefixes.
 
   Example:
     For input
