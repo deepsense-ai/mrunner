@@ -11,7 +11,39 @@ neptune_logger_on = False
 import ast
 
 
-def get_configuration(print_diagnostics=False, with_neptune=False, inject_parameters_to_gin=False):
+def nest_params(params, prefixes):
+  """Nest params based on keys prefixes.
+
+  Example:
+    For input
+    params = dict(
+      param0=value0,
+      prefix0_param1=value1,
+      prefix0_param2=value2
+    )
+    prefixes = ("prefix0_",)
+    This method modifies params into nested dictionary:
+    {
+      "param0" : value0
+      "prefix0": {
+        "param1": value1,
+        "param2": value2
+      }
+    }
+  """
+  for prefix in prefixes:
+    dict_params = Munch()
+    l = len(prefix)
+    for k in list(params.keys()):
+      if k.startswith(prefix):
+        dict_params[k[l:]] = params.pop(k)
+    params[prefix[:-1]] = dict_params
+
+
+def get_configuration(
+        print_diagnostics=False, with_neptune=False,
+        inject_parameters_to_gin=False, nesting_prefixes=()
+):
   global neptune_logger_on
 
   parser = argparse.ArgumentParser(description='Debug run.')
@@ -51,7 +83,6 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
       if "." in param_name:
         gin.bind_parameter(param_name, params[param_name])
 
-
   if with_neptune:
     if 'NEPTUNE_API_TOKEN' not in os.environ:
       print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
@@ -70,12 +101,14 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
         except:
           print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
 
+      # Set pwd property with path to experiment.
+      properties = {"pwd": os.getcwd()}
       neptune.create_experiment(name=experiment.name, tags=experiment.tags,
-                                params=params, git_info=git_info)
+                                params=params, properties=properties,
+                                git_info=git_info)
 
       import atexit
       atexit.register(neptune.stop)
-
 
   # TODO(pm): find a way to pass metainformation
   if print_diagnostics:
@@ -83,6 +116,8 @@ def get_configuration(print_diagnostics=False, with_neptune=False, inject_parame
     print("cd {}".format(os.getcwd()))
     print(socket.getfqdn())
     print("Params:{}".format(params))
+
+  nest_params(params, nesting_prefixes)
 
   return params
 
