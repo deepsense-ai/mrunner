@@ -19,7 +19,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
                               exclude_git_files=True,
                               exclude=[], with_neptune=True,
                               update_lambda=lambda d1, d2: d1.update(d2),
-                              callbacks=[], _script_name=None):
+                              callbacks=[], _script_name=None, display_neptune_link=True):
 
   _script_name = None if _script_name is None else pathlib.Path(_script_name).stem
   if _script_name:
@@ -32,6 +32,10 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
   if with_neptune:
       if "NEPTUNE_API_TOKEN" in os.environ:
           env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]}
+          if display_neptune_link and add_random_tag:
+            print("> ============ ============ ============ Neptune link ============ ============ ============ <")
+            print(f"https://ui.neptune.ml/loss/sandbox/experiments?tag=%5B%22{random_tag}%22%5D")
+            print("> ============ ============ ============ Neptune link ============ ============ ============ <")
       else:
           print("NEPTUNE_API_TOKEN is not set. Connecting with neptune will fail.")
 
