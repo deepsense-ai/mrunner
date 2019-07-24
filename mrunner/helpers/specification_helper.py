@@ -32,12 +32,17 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
   if with_neptune:
       if "NEPTUNE_API_TOKEN" in os.environ:
           env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]}
-          if display_neptune_link and add_random_tag:
-            print("> ============ ============ ============ Neptune link ============ ============ ============ <")
-            print(f"https://ui.neptune.ml/loss/sandbox/experiments?tag=%5B%22{random_tag}%22%5D")
-            print("> ============ ============ ============ Neptune link ============ ============ ============ <")
+      elif "NEPTUNE_API_TOKEN_" in os.environ:  # This is if we want to avoid setting the token for other applications
+          env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN_"]}
       else:
           print("NEPTUNE_API_TOKEN is not set. Connecting with neptune will fail.")
+          display_neptune_link = False
+
+      if display_neptune_link and add_random_tag:
+        print("> ============ ============ ============ Neptune link ============ ============ ============ <")
+        print(f"https://ui.neptune.ml/loss/sandbox/experiments?tag=%5B%22{random_tag}%22%5D")
+        print("> ============ ============ ============ Neptune link ============ ============ ============ <")
+
 
   params_configurations = get_combinations(params_grid)
   experiments = []
