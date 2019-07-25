@@ -40,7 +40,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
 
       if display_neptune_link and add_random_tag:
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
-        print(f"https://ui.neptune.ml/loss/sandbox/experiments?tag=%5B%22{random_tag}%22%5D")
+        print(f"https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D")
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
 
 
@@ -49,7 +49,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
 
   git_info = None
   if exclude_git_files:
-    exclude += [".git"]
+    exclude += [".git", ".gitignore", ".gitmodules"]
     git_info = get_git_info(".")
     if git_info:
       # Hack due to external bugs
