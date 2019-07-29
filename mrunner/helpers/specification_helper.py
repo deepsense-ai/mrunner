@@ -12,10 +12,10 @@ import copy
 import pathlib
 
 
-def create_experiments_helper(experiment_name: str, base_config: dict,
-                              project_name:str, params_grid,
+def create_experiments_helper(experiment_name: str, base_config: dict, params_grid,
                               script: str, python_path: str,
-                              paths_to_dump: str, tags: List[str], add_random_tag=True,
+                              paths_to_dump: str, tags: List[str],
+                              project_name=None, add_random_tag=True,
                               exclude_git_files=True,
                               exclude=[], with_neptune=True,
                               update_lambda=lambda d1, d2: d1.update(d2),
@@ -39,6 +39,12 @@ def create_experiments_helper(experiment_name: str, base_config: dict,
           display_neptune_link = False
 
       if display_neptune_link and add_random_tag:
+        if project_name is None:
+          assert "NEPTUNE_PROJECT_NAME" in os.environ, "You should either set NEPTUNE_PROJECT_NAME or directly pass " \
+                                         "the requested project name. The former is better in the collaborative work" \
+                                         "with many projects"
+          project_name = os.environ.get("NEPTUNE_PROJECT_NAME")
+
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
         print(f"https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D")
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
