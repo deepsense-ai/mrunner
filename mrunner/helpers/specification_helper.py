@@ -10,6 +10,7 @@ from mrunner.experiment import Experiment
 from mrunner.utils.namesgenerator import get_random_name
 import copy
 import pathlib
+from termcolor import colored
 
 
 def create_experiments_helper(experiment_name: str, base_config: dict, params_grid,
@@ -46,7 +47,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
           project_name = os.environ.get("NEPTUNE_PROJECT_NAME")
 
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
-        print(f"https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D")
+        print(colored(f"https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D", 'green'))
         print("> ============ ============ ============ Neptune link ============ ============ ============ <")
 
 

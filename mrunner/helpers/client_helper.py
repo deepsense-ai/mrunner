@@ -127,6 +127,7 @@ def logger(m, v):
 
   if neptune_logger_on:
     import neptune
+    m = m.lstrip().rstrip()  # This is to circumvent neptune's bug
     neptune.send_metric(m, v)
   else:
     print("{}:{}".format(m, v))
