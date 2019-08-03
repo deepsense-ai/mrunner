@@ -58,6 +58,7 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('ntasks', dict(default=None)),
     ('nodes', dict(default=None)),
     ('modules_to_load', dict(default=attr.Factory(list), type=list)),
+    ('sbatch_options', dict(default=attr.Factory(list), type=list)),
     ('after_module_load_cmd', dict(default='')),
     ('cmd_type', dict(default='srun')),
     ('requirements_file', dict(default=(None))),
@@ -204,8 +205,8 @@ class SlurmBackend(object):
         slurm_scratch_dir = experiment['storage_dir']
         experiment = ExperimentRunOnSlurm(slurm_scratch_dir=slurm_scratch_dir, slurm_url=slurm_url,
                                           **filter_only_attr(ExperimentRunOnSlurm, experiment))
-        assert experiment.venv is not None or experiment.singularity_container is not None, \
-            "Execution environment needs to be specified. venv or singularity_container"
+        # assert experiment.venv is not None or experiment.singularity_container is not None, \
+        #     "Execution environment needs to be specified. venv or singularity_container"
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
