@@ -20,8 +20,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
                               exclude_git_files=True,
                               exclude=[], with_neptune=True,
                               update_lambda=lambda d1, d2: d1.update(d2),
-                              callbacks=[], _script_name=None, display_neptune_link=True):
-
+                              callbacks=[], _script_name=None, display_neptune_link=True, env={}):
   _script_name = None if _script_name is None else pathlib.Path(_script_name).stem
   if _script_name:
     tags.append(_script_name)
@@ -29,12 +28,11 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
     random_tag = get_random_name()
     tags.append(random_tag)
 
-  env = {}
   if with_neptune:
       if "NEPTUNE_API_TOKEN" in os.environ:
-          env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN"]}
+          env["NEPTUNE_API_TOKEN"]=os.environ["NEPTUNE_API_TOKEN"]
       elif "NEPTUNE_API_TOKEN_" in os.environ:  # This is if we want to avoid setting the token for other applications
-          env = {"NEPTUNE_API_TOKEN": os.environ["NEPTUNE_API_TOKEN_"]}
+          env["NEPTUNE_API_TOKEN"]=os.environ["NEPTUNE_API_TOKEN_"]
       else:
           print("NEPTUNE_API_TOKEN is not set. Connecting with neptune will fail.")
           display_neptune_link = False
@@ -65,7 +63,6 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
   #Last chance to change something
   for callback in callbacks:
       callback(**locals())
-
   for params_configuration in params_configurations:
     config = copy.deepcopy(base_config)
     update_lambda(config, params_configuration)
