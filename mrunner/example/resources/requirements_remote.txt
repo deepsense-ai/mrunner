@@ -1,6 +1,4 @@
-neptune-client
-git+https://github.com/deepsense-ai/mrunner.git@new_neptune
-munch
+neptune-climunch
 cloudpickle
 gin-config
 mpi4py

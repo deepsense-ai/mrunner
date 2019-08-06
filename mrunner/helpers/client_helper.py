@@ -7,7 +7,8 @@ import os
 import socket
 from munch import Munch
 import cloudpickle
-neptune_logger_on = False
+
+experiment_ = None
 import ast
 
 
@@ -44,7 +45,7 @@ def get_configuration(
         print_diagnostics=False, with_neptune=False,
         inject_parameters_to_gin=False, nesting_prefixes=()
 ):
-  global neptune_logger_on
+  global experiment_
 
   parser = argparse.ArgumentParser(description='Debug run.')
   parser.add_argument('--ex', type=str, default="")
@@ -83,13 +84,11 @@ def get_configuration(
       if "." in param_name:
         gin.bind_parameter(param_name, params[param_name])
 
-  if with_neptune:
+  if with_neptune==True:
     if 'NEPTUNE_API_TOKEN' not in os.environ:
       print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
     else:
-      neptune_logger_on = True
       import neptune
-
       neptune.init(project_qualified_name=experiment.project)
       params_to_sent_to_neptune = {}
       for param_name in params:
@@ -109,6 +108,15 @@ def get_configuration(
 
       import atexit
       atexit.register(neptune.stop)
+      experiment_ = neptune.get_experiment()
+
+  if type(with_neptune)==str:
+    import neptune
+    print("Connecting to experiment:", with_neptune)
+    print_diagnostics=False
+    neptune.init(project_qualified_name=experiment.project)
+    experiment_ = neptune.project.get_experiments(with_neptune)[0]
+
 
   # TODO(pm): find a way to pass metainformation
   if print_diagnostics:
@@ -118,16 +126,24 @@ def get_configuration(
     print("Params:{}".format(params))
 
   nest_params(params, nesting_prefixes)
+  if experiment_:
+    params['experiment_id'] = experiment_.id
+  else:
+    params['experiment_id'] = None
 
   return params
 
 
 def logger(m, v):
-  global neptune_logger_on
+  global experiment_
 
-  if neptune_logger_on:
+  if experiment_:
     import neptune
+    from PIL import Image
     m = m.lstrip().rstrip()  # This is to circumvent neptune's bug
-    neptune.send_metric(m, v)
+    if type(v) == Image.Image:
+      experiment_.send_image(m, v)
+    else:
+      experiment_.send_metric(m, v)
   else:
     print("{}:{}".format(m, v))
