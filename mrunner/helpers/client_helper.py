@@ -11,6 +11,17 @@ experiment_ = None
 logger_ = logging.getLogger(__name__)
 
 
+def inject_dict_to_gin(dict, scope=None):
+    import gin
+    bindings = []
+    scope_str = "" if scope is None else f"{scope}/"
+    for key, value in dict.items():
+        if type(value) is str and value[0] != "@":
+            value = '"' + value + '"' if type(value) is str else value
+        bindings.append(f"{scope_str}{key} = {value}")
+    gin.parse_config(bindings)
+
+
 def nest_params(params, prefixes):
     """Nest params based on keys prefixes.
 
@@ -77,11 +88,8 @@ def get_configuration(
 
     if inject_parameters_to_gin:
         logger_.info("The parameters of the form 'aaa.bbb' will be injected to gin.")
-        import gin
-        import gin.tf.external_configurables
-        for param_name in params:
-            if "." in param_name:
-                gin.bind_parameter(param_name, params[param_name])
+        gin_params = {param_name:params[param_name] for param_name in params if "." in param_name}
+        inject_dict_to_gin(gin_params)
 
     if with_neptune == True:
         if 'NEPTUNE_API_TOKEN' not in os.environ:
