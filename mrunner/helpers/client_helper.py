@@ -1,149 +1,146 @@
-# TODO(pm): move this to be importable from mrunner
-
-
 import argparse
 import datetime
 import os
 import socket
 from munch import Munch
 import cloudpickle
+import ast
+import logging
 
 experiment_ = None
-import ast
+logger_ = logging.getLogger(__name__)
 
 
 def nest_params(params, prefixes):
-  """Nest params based on keys prefixes.
+    """Nest params based on keys prefixes.
 
-  Example:
-    For input
-    params = dict(
-      param0=value0,
-      prefix0_param1=value1,
-      prefix0_param2=value2
-    )
-    prefixes = ("prefix0_",)
-    This method modifies params into nested dictionary:
-    {
-      "param0" : value0
-      "prefix0": {
-        "param1": value1,
-        "param2": value2
+    Example:
+      For input
+      params = dict(
+        param0=value0,
+        prefix0_param1=value1,
+        prefix0_param2=value2
+      )
+      prefixes = ("prefix0_",)
+      This method modifies params into nested dictionary:
+      {
+        "param0" : value0
+        "prefix0": {
+          "param1": value1,
+          "param2": value2
+        }
       }
-    }
-  """
-  for prefix in prefixes:
-    dict_params = Munch()
-    l = len(prefix)
-    for k in list(params.keys()):
-      if k.startswith(prefix):
-        dict_params[k[l:]] = params.pop(k)
-    params[prefix[:-1]] = dict_params
+    """
+    for prefix in prefixes:
+        dict_params = Munch()
+        l_ = len(prefix)
+        for k in list(params.keys()):
+            if k.startswith(prefix):
+                dict_params[k[l_:]] = params.pop(k)
+        params[prefix[:-1]] = dict_params
 
 
 def get_configuration(
         print_diagnostics=False, with_neptune=False,
         inject_parameters_to_gin=False, nesting_prefixes=()
 ):
-  global experiment_
+    # with_neptune might be also an id of an experiment
+    global experiment_
 
-  parser = argparse.ArgumentParser(description='Debug run.')
-  parser.add_argument('--ex', type=str, default="")
-  parser.add_argument('--config', type=str, default="")
-  commandline_args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Debug run.')
+    parser.add_argument('--ex', type=str, default="")
+    parser.add_argument('--config', type=str, default="")
+    commandline_args = parser.parse_args()
 
-  params = None
-  experiment = None
-
-  if commandline_args.ex:
-    from path import Path
-    vars = {'script': str(Path(commandline_args.ex).name)}
-    exec(open(commandline_args.ex).read(), vars)
-    experiments = vars['experiments_list']
-    print("The specifcation file contains {} "
-          "experiments configurations. The first one will be used.".format(len(experiments)))
-    experiment = experiments[0]
-    params = experiment.parameters
+    params = None
+    experiment = None
     git_info = None
 
-  # TODO(pm): why not make mrunner to pickle experiment so that we do not have to homogenize here
-  if commandline_args.config:
-    print("File to load:{}".format(commandline_args.config))
-    with open(commandline_args.config, "rb") as f:
-      experiment = Munch(cloudpickle.load(f))
-    params = Munch(experiment['parameters'])
-    git_info = experiment.get("git_info", None)
-    if git_info:
-      git_info.commit_date = datetime.datetime.now()
+    if commandline_args.ex:
+        from path import Path
+        vars_ = {'script': str(Path(commandline_args.ex).name)}
+        exec(open(commandline_args.ex).read(), vars_)
+        experiments = vars_['experiments_list']
+        logger_.info("The specifcation file contains {} "
+                     "experiments configurations. The first one will be used.".format(len(experiments)))
+        experiment = experiments[0]
+        params = experiment.parameters
 
-  if inject_parameters_to_gin:
-    print("The parameters of the form 'aaa.bbb' will be injected to gin.")
-    import gin
-    import gin.tf.external_configurables
-    for param_name in params:
-      if "." in param_name:
-        gin.bind_parameter(param_name, params[param_name])
+    if commandline_args.config:
+        print("File to load:{}".format(commandline_args.config))
+        with open(commandline_args.config, "rb") as f:
+            experiment = Munch(cloudpickle.load(f))
+        params = Munch(experiment['parameters'])
+        git_info = experiment.get("git_info", None)
+        if git_info:
+            git_info.commit_date = datetime.datetime.now()
 
-  if with_neptune==True:
-    if 'NEPTUNE_API_TOKEN' not in os.environ:
-      print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
+    if inject_parameters_to_gin:
+        logger_.info("The parameters of the form 'aaa.bbb' will be injected to gin.")
+        import gin
+        import gin.tf.external_configurables
+        for param_name in params:
+            if "." in param_name:
+                gin.bind_parameter(param_name, params[param_name])
+
+    if with_neptune == True:
+        if 'NEPTUNE_API_TOKEN' not in os.environ:
+            print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
+        else:
+            import neptune
+            neptune.init(project_qualified_name=experiment.project)
+            params_to_sent_to_neptune = {}
+            for param_name in params:
+                try:
+                    val = str(params[param_name])
+                    if val.isnumeric():
+                        val = ast.literal_eval(val)
+                    params_to_sent_to_neptune[param_name] = val
+                except:
+                    print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
+
+            # Set pwd property with path to experiment.
+            properties = {"pwd": os.getcwd()}
+            neptune.create_experiment(name=experiment.name, tags=experiment.tags,
+                                      params=params, properties=properties,
+                                      git_info=git_info)
+
+            import atexit
+            atexit.register(neptune.stop)
+            experiment_ = neptune.get_experiment()
+
+    if type(with_neptune) == str:
+        import neptune
+        print("Connecting to experiment:", with_neptune)
+        print_diagnostics = False
+        neptune.init(project_qualified_name=experiment.project)
+        experiment_ = neptune.project.get_experiments(with_neptune)[0]
+
+    if print_diagnostics:
+        print("PYTHONPATH:{}".format(os.environ.get('PYTHONPATH', 'not_defined')))
+        print("cd {}".format(os.getcwd()))
+        print(socket.getfqdn())
+        print("Params:{}".format(params))
+
+    nest_params(params, nesting_prefixes)
+    if experiment_:
+        params['experiment_id'] = experiment_.id
     else:
-      import neptune
-      neptune.init(project_qualified_name=experiment.project)
-      params_to_sent_to_neptune = {}
-      for param_name in params:
-        try:
-          val = str(params[param_name])
-          if val.isnumeric():
-            val = ast.literal_eval(val)
-          params_to_sent_to_neptune[param_name] = val
-        except:
-          print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
+        params['experiment_id'] = None
 
-      # Set pwd property with path to experiment.
-      properties = {"pwd": os.getcwd()}
-      neptune.create_experiment(name=experiment.name, tags=experiment.tags,
-                                params=params, properties=properties,
-                                git_info=git_info)
-
-      import atexit
-      atexit.register(neptune.stop)
-      experiment_ = neptune.get_experiment()
-
-  if type(with_neptune)==str:
-    import neptune
-    print("Connecting to experiment:", with_neptune)
-    print_diagnostics=False
-    neptune.init(project_qualified_name=experiment.project)
-    experiment_ = neptune.project.get_experiments(with_neptune)[0]
-
-
-  # TODO(pm): find a way to pass metainformation
-  if print_diagnostics:
-    print("PYTHONPATH:{}".format(os.environ.get('PYTHONPATH', 'not_defined')))
-    print("cd {}".format(os.getcwd()))
-    print(socket.getfqdn())
-    print("Params:{}".format(params))
-
-  nest_params(params, nesting_prefixes)
-  if experiment_:
-    params['experiment_id'] = experiment_.id
-  else:
-    params['experiment_id'] = None
-
-  return params
+    return params
 
 
 def logger(m, v):
-  global experiment_
+    global experiment_
 
-  if experiment_:
-    import neptune
-    from PIL import Image
-    m = m.lstrip().rstrip()  # This is to circumvent neptune's bug
-    if type(v) == Image.Image:
-      experiment_.send_image(m, v)
+    if experiment_:
+        import neptune
+        from PIL import Image
+        m = m.lstrip().rstrip()  # This is to circumvent neptune's bug
+        if type(v) == Image.Image:
+            experiment_.send_image(m, v)
+        else:
+            experiment_.send_metric(m, v)
     else:
-      experiment_.send_metric(m, v)
-  else:
-    print("{}:{}".format(m, v))
+        print("{}:{}".format(m, v))
