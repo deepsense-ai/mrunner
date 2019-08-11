@@ -78,7 +78,7 @@ def get_configuration(
         params = experiment.parameters
 
     if commandline_args.config:
-        print("File to load:{}".format(commandline_args.config))
+        logger_.info("File to load:{}".format(commandline_args.config))
         with open(commandline_args.config, "rb") as f:
             experiment = Munch(cloudpickle.load(f))
         params = Munch(experiment['parameters'])
@@ -93,7 +93,7 @@ def get_configuration(
 
     if with_neptune == True:
         if 'NEPTUNE_API_TOKEN' not in os.environ:
-            print("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
+            logger_.warn("Neptune will be not used.\nTo run with neptune please set your NEPTUNE_API_TOKEN variable")
         else:
             import neptune
             neptune.init(project_qualified_name=experiment.project)
@@ -105,7 +105,7 @@ def get_configuration(
                         val = ast.literal_eval(val)
                     params_to_sent_to_neptune[param_name] = val
                 except:
-                    print("Not possible to send to neptune:{}. Implement __str__".format(param_name))
+                   logger_.warn("Not possible to send to neptune:{}. Implement __str__".format(param_name))
 
             # Set pwd property with path to experiment.
             properties = {"pwd": os.getcwd()}
@@ -119,16 +119,16 @@ def get_configuration(
 
     if type(with_neptune) == str:
         import neptune
-        print("Connecting to experiment:", with_neptune)
+        logger_.info("Connecting to experiment:", with_neptune)
         print_diagnostics = False
         neptune.init(project_qualified_name=experiment.project)
         experiment_ = neptune.project.get_experiments(with_neptune)[0]
 
     if print_diagnostics:
-        print("PYTHONPATH:{}".format(os.environ.get('PYTHONPATH', 'not_defined')))
-        print("cd {}".format(os.getcwd()))
-        print(socket.getfqdn())
-        print("Params:{}".format(params))
+        logger_.info("PYTHONPATH:{}".format(os.environ.get('PYTHONPATH', 'not_defined')))
+        logger_.info("cd {}".format(os.getcwd()))
+        logger_.info(socket.getfqdn())
+        logger_.info("Params:{}".format(params))
 
     nest_params(params, nesting_prefixes)
     if experiment_:
