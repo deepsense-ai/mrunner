@@ -11,6 +11,7 @@ from mrunner.utils.namesgenerator import get_random_name
 import copy
 import pathlib
 from termcolor import colored
+import pyperclip
 
 
 def create_experiments_helper(experiment_name: str, base_config: dict, params_grid,
@@ -43,9 +44,11 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
                                                              "the requested project name. The former is better in the collaborative work" \
                                                              "with many projects"
                 project_name = os.environ.get("NEPTUNE_PROJECT_NAME")
+            link = f'https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D'
+            pyperclip.copy(link)
 
             print("> ============ ============ ============ Neptune link ============ ============ ============ <")
-            print(colored(f"https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D", 'green'))
+            print(colored(link, 'green'))
             print("> ============ ============ ============ Neptune link ============ ============ ============ <")
 
     params_configurations = get_combinations(params_grid)
