@@ -16,9 +16,11 @@ def inject_dict_to_gin(dict, scope=None):
     bindings = []
     scope_str = "" if scope is None else f"{scope}/"
     for key, value in dict.items():
-        if type(value) is str and value[0] != "@":
-            value = '"' + value + '"' if type(value) is str else value
-        bindings.append(f"{scope_str}{key} = {value}")
+        if type(value) is str and value[0] == "@":
+            # value = '"' + value + '"' if type(value) is str else value
+            bindings.append(f"{scope_str}{key} = {value}")
+        else:
+            gin.bind_parameter(key, value)
     gin.parse_config(bindings)
 
 
