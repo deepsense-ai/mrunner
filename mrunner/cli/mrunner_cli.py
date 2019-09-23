@@ -161,8 +161,16 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
                 'kubernetes': KubernetesBackend,
                 'slurm': SlurmBackend
             }[experiment['backend_type']]()
-            # TODO: add calling experiments in parallel
-            backend.run(**run_kwargs)
+
+            num_of_reties = 5
+            for i in range(num_of_reties):
+                try:
+                    backend.run(**run_kwargs)
+                    break
+                except Exception as e:
+                    print(f"Caught exception: {e}. Retrying until {num_of_reties} times")
+                raise RuntimeError(f"Failed for {num_of_reties} times. Give up.")
+
     finally:
         if neptune_dir:
             neptune_dir.rmtree_p()
