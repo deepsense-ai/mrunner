@@ -52,6 +52,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
             print("> ============ ============ ============ Neptune link ============ ============ ============ <")
 
     params_configurations = get_combinations(params_grid)
+    print(colored(f"Will run {len(params_configurations)} experiments", 'red'))
     experiments = []
 
     git_info = None
