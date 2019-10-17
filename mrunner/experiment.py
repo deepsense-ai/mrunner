@@ -33,27 +33,22 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
 ]
 
 # TODO(pj): Refactor me, create factory method and clean up __init__ (use attrs)
+@attr.s
 class Experiment(object):
 
-    def __init__(self, project, name, script, parameters, **kwargs):
-        def _get_arg(k, sep=' '):
-            list_type = ['tags', 'paths-to-copy', 'exclude', 'properties', 'python_path']
-            v = kwargs.pop(k, [] if k in list_type else '')
-            return v.split(sep) if isinstance(v, six.string_types) and k in list_type else v
-
-        self.script = script
-        self.project = project
-        self.name = name[:16]
-        self.parameters = parameters
-
-        self.env = kwargs.pop('env', {})
-        self.env['PYTHONPATH'] = ':'.join(['$PYTHONPATH', ] + _get_arg('python_path', sep=':'))
-
-        for k in list(kwargs.keys()):
-            self.__setattr__(k, _get_arg(k))
+    project = attr.ib()
+    name = attr.ib()
+    script = attr.ib()
+    parameters = attr.ib()
+    env = attr.ib(factory=dict)
+    paths_to_copy = attr.ib(factory=list)
+    tags = attr.ib(factory=list)
+    exclude = attr.ib(factory=list)
+    random_name = attr.ib(factory=get_random_name)
+    git_info = attr.ib(default=None)
 
     def to_dict(self):
-        return self.__dict__
+        return attr.asdict(self)
 
 
 def _merge_experiment_parameters(cli_kwargs, context):
@@ -79,7 +74,7 @@ def _load_py_experiment(script, spec, *, dump_dir):
     LOGGER.info('Found {} function in {}; will use it as experiments configuration generator'.format(spec, script))
 
     def _create_and_dump_config(spec_params, dump_dir):
-        config_path = dump_dir / 'config-{}-{}.pkl'.format(get_random_name(), id_generator(4))
+        config_path = dump_dir / 'config-{}-{}.pkl'.format(spec_params['random_name'], id_generator(4))
         with open(config_path, "wb") as file:
             cloudpickle.dump(spec_params, file)
             

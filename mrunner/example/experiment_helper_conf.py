@@ -18,6 +18,6 @@ params_grid = dict(param2=["exp1", "exp2"], param3=[lambda x:x, lambda x:x**2])
 experiments_list = create_experiments_helper(experiment_name='Grid experiment',
                                             project_name=os.environ["PROJECT_QUALIFIED_NAME"],
                                             script='python experiment_basic.py',
-                                            python_path='.', paths_to_dump='',
+                                            python_path='.',
                                             tags=["whoami", "beautiful_project"],
                                             base_config=base_config, params_grid=params_grid)

@@ -14,6 +14,6 @@ params_grid = dict(param1=[10, 20])
 experiments_list = create_experiments_helper(experiment_name='MPI experiment',
                                             project_name=os.environ["PROJECT_QUALIFIED_NAME"],
                                             script='mpirun python experiment_mpi.py',
-                                            python_path='.', paths_to_dump='',
+                                            python_path='.',
                                             tags=["whoami", "beautiful_project"],
                                             base_config=base_config, params_grid=params_grid)

@@ -1,33 +1,46 @@
+import copy
 import os
+import pathlib
+import warnings
 from collections import Mapping, OrderedDict
 from itertools import product
 from typing import List
 
+import pyperclip
 from munch import Munch
 from neptune.utils import get_git_info
+from termcolor import colored
 
 from mrunner.experiment import Experiment
 from mrunner.utils.namesgenerator import get_random_name
-import copy
-import pathlib
-from termcolor import colored
-import pyperclip
 
 
-def create_experiments_helper(experiment_name: str, base_config: dict, params_grid,
-                              script: str, python_path: str,
-                              paths_to_dump: str, tags: List[str],
-                              project_name=None, add_random_tag=True,
-                              exclude_git_files=True,
-                              exclude=[], with_neptune=True,
-                              callbacks=(), _script_name=None, display_neptune_link=True, env={}):
-    _script_name = None if _script_name is None else pathlib.Path(_script_name).stem
-    if _script_name:
-        tags.append(_script_name)
+def create_experiments_helper(experiment_name: str, base_config: dict, params_grid: dict,
+                              script: str, python_path: str, tags: List[str],
+                              add_random_tag: bool = True, env: dict = None,
+                              project_name: str = None, exclude_git_files: bool = True,
+                              exclude: List[str] = None, with_neptune: bool = True,
+                              callbacks: list = None, display_neptune_link: bool = True,
+                              paths_to_dump: str = None, paths_to_copy: List[str] = None):
+
+    env = env if env is not None else {}
+    exclude = exclude if exclude is not None else []
+    callbacks = callbacks if callbacks is not None else []
+        
+    random_name = get_random_name()
     if add_random_tag:
-        random_tag = get_random_name()
-        tags.append(random_tag)
+        tags.append(random_name)
+        
+    if paths_to_dump:
+        warnings.warn(
+            "paths_to_dump is deprecated, use paths_to_copy instead",
+            DeprecationWarning
+        )
+        paths_to_copy = paths_to_dump.split(' ')
 
+    if python_path:
+        env['PYTHONPATH'] = ':'.join(['$PYTHONPATH', ] + python_path.split(':'))
+        
     if with_neptune:
         if "NEPTUNE_API_TOKEN" in os.environ:
             env["NEPTUNE_API_TOKEN"] = os.environ["NEPTUNE_API_TOKEN"]
@@ -43,7 +56,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
                                                              "the requested project name. The former is better in the collaborative work" \
                                                              "with many projects"
                 project_name = os.environ.get("NEPTUNE_PROJECT_NAME")
-            link = f'https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_tag}%22%5D'
+            link = f'https://ui.neptune.ml/{project_name}/experiments?tag=%5B%22{random_name}%22%5D'
             pyperclip.copy(link)
 
             print("> ============ ============ ============ Neptune link ============ ============ ============ <")
@@ -71,9 +84,8 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
         config = Munch(config)
 
         experiments.append(Experiment(project=project_name, name=experiment_name, script=script,
-                                      parameters=config, python_path=python_path,
-                                      paths_to_dump=paths_to_dump, tags=tags, env=env,
-                                      exclude=exclude, git_info=git_info))
+                                      parameters=config, paths_to_copy=paths_to_copy, tags=tags, env=env,
+                                      exclude=exclude, git_info=git_info, random_name=random_name))
 
     return experiments
 
