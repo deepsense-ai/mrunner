@@ -13,7 +13,7 @@ from path import Path
 from mrunner.backends.k8s import KubernetesBackend
 from mrunner.backends.slurm import SlurmBackend#, SlurmNeptuneToken
 from mrunner.cli.config import ConfigParser, context as context_cli
-from mrunner.experiment import generate_experiments, get_experiments_list
+from mrunner.experiment import generate_experiments
 from mrunner.utils.neptune import NeptuneWrapperCmd#, NeptuneToken, NEPTUNE_LOCAL_VERSION
 from pprint import pformat
 LOGGER = logging.getLogger(__name__)
@@ -120,9 +120,7 @@ def run(ctx, neptune, spec, tags, requirements_file, base_image, script, params)
             neptune_dir = script_path.parent / 'neptune_{}'.format(script_path.stem)
             neptune_dir.makedirs_p()
 
-        for neptune_path, experiment in generate_experiments(script, neptune, context, spec=spec,
-                                                             neptune_dir=neptune_dir):
-
+        for neptune_path, experiment in generate_experiments(script, context, spec=spec, dump_dir=neptune_dir):
             experiment.update({'base_image': base_image, 'requirements': requirements})
 
             # TODO(pm):remove me please
