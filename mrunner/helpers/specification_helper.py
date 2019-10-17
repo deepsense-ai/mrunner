@@ -20,7 +20,6 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
                               project_name=None, add_random_tag=True,
                               exclude_git_files=True,
                               exclude=[], with_neptune=True,
-                              update_lambda=lambda d1, d2: d1.update(d2),
                               callbacks=(), _script_name=None, display_neptune_link=True, env={}):
     _script_name = None if _script_name is None else pathlib.Path(_script_name).stem
     if _script_name:
@@ -68,7 +67,7 @@ def create_experiments_helper(experiment_name: str, base_config: dict, params_gr
         callback(**locals())
     for params_configuration in params_configurations:
         config = copy.deepcopy(base_config)
-        update_lambda(config, params_configuration)
+        config.update(params_configuration)
         config = Munch(config)
 
         experiments.append(Experiment(project=project_name, name=experiment_name, script=script,
