@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#run as basic_setup.sh PROMETHEUS_LOGIN
+#run as basic_setup.sh PROMETHEUS_LOGIN GRANT_NAME
 
 set -e
 export PROMETHEUS_LOGIN=$1
@@ -33,9 +33,9 @@ function prepare_mrunner_config {
 
 }
 
-
 function prepare_envs_and_mrunner_config {
     if [ -z "$PROMETHEUS_LOGIN" ]; then echo "PROMETHEUS_LOGIN must be set. exiting";exit; fi
+    if [ -z "$GRANT_NAME" ]; then echo "GRANT_NAME must be set. exiting";exit; fi
        prepare_local_venv
       prepare_mrunner_config
 }

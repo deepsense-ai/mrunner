@@ -13,6 +13,6 @@ params_grid = {"LinearFunction.coefficient": [1.0, 2.0]}
 experiments_list = create_experiments_helper(experiment_name='Gin experiment',
                                             project_name=os.environ["PROJECT_QUALIFIED_NAME"],
                                             script='python experiment_gin.py',
-                                            python_path='.'
+                                            python_path='.',
                                             tags=["whoami", "gin", "beautiful_project"],
                                             base_config=base_config, params_grid=params_grid)
