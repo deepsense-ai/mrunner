@@ -13,7 +13,7 @@ from paramiko.agent import Agent
 from path import Path
 
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
-from mrunner.plgrid import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
+from mrunner.consts import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
 from mrunner.utils.namesgenerator import id_generator
 # from mrunner.utils.neptune import NeptuneToken
 from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_attr_class, filter_only_attr
