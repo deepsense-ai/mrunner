@@ -11,8 +11,8 @@ less configuration. Main features are:
 (if remote system supports it)
 - monitor experiments using [neptune](neptune.ml)
 
-Currently [slurm](https://slurm.schedmd.com) and
+Currently [slurm](https://slurm.schedmd.com) and _(possibly)_
 [kubernetes](http://kubernetes.io) clusters are supported.
 It is also possible to run experiment locally.
 
-More details may be found in [documentation](https://deepsense-ai.github.io/mrunner)
+More details may be found in _(deprecated)_ [documentation](https://deepsense-ai.github.io/mrunner)
