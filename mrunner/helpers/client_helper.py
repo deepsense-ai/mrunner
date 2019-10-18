@@ -69,6 +69,7 @@ def get_configuration(
     experiment = None
     git_info = None
 
+    # This is here for running locally, load experiment from spec
     if commandline_args.ex:
         from path import Path
         vars_ = {'script': str(Path(commandline_args.ex).name)}
@@ -79,6 +80,7 @@ def get_configuration(
         experiment = experiments[0]
         params = experiment.parameters
 
+    # This is here for running remotely, load experiment from dump
     if commandline_args.config:
         logger_.info("File to load:{}".format(commandline_args.config))
         with open(commandline_args.config, "rb") as f:

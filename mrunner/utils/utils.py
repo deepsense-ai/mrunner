@@ -4,6 +4,7 @@ from collections import namedtuple, OrderedDict
 from tempfile import NamedTemporaryFile
 
 import attr
+import six
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from path import Path
 
@@ -47,7 +48,6 @@ class TempFile(object):
     def path(self):
         return Path(self._file.name)
 
-
 class GeneratedTemplateFile(TempFile):
 
     def __init__(self, template_filename=None, **kwargs):
@@ -56,8 +56,21 @@ class GeneratedTemplateFile(TempFile):
         payload = template.render(**kwargs).encode(encoding='utf-8')
         self.write(payload)
 
-
 PathToDump = namedtuple('PathToDump', 'local_path rel_remote_path')
+
+@attr.s
+class WrapperCmd(object):
+
+    _cmd = attr.ib()
+    _experiment_config_path = attr.ib()
+    env = attr.ib(factory=dict)
+
+    @property
+    def command(self):
+        cmd = self._cmd.split(' ') if isinstance(self._cmd, six.string_types) else self._cmd
+        config_argv = ['--config', str(self._experiment_config_path)]
+        cmd = cmd + config_argv
+        return ' '.join(cmd)
 
 
 def get_paths_to_copy(paths_to_copy=None, exclude=None):

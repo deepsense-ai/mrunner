@@ -13,9 +13,8 @@ from paramiko.agent import Agent
 from path import Path
 
 from mrunner.experiment import COMMON_EXPERIMENT_MANDATORY_FIELDS, COMMON_EXPERIMENT_OPTIONAL_FIELDS
-from mrunner.plgrid import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
+from mrunner.consts import PLGRID_USERNAME, PLGRID_HOST, PLGRID_TESTING_PARTITION
 from mrunner.utils.namesgenerator import id_generator
-# from mrunner.utils.neptune import NeptuneToken
 from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_attr_class, filter_only_attr
 
 LOGGER = logging.getLogger(__name__)
@@ -184,16 +183,6 @@ class SRunWrapperCmd(SlurmWrappersCmd):
         super(SRunWrapperCmd, self).__init__(experiment, script_path, **kwargs)
         self._cmd = 'srun'
 
-
-# class SlurmNeptuneToken(NeptuneToken):
-#
-#     def __init__(self, experiment):
-#         # TODO: need refactor other part of code - here expereiment can be dict or backend specific object
-#         user_id = experiment['user_id'] if isinstance(experiment, dict) else experiment.user_id
-#         profile_name = '{}-{}'.format(user_id, socket.gethostname())
-#         super(SlurmNeptuneToken, self).__init__(profile=profile_name)
-#
-
 class SlurmBackend(object):
 
     def run(self, experiment):
@@ -212,7 +201,6 @@ class SlurmBackend(object):
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
-        self.deploy_neptune_token(experiment=experiment)
         script_path = self.deploy_code(experiment)
         SCmd = {'sbatch': SBatchWrapperCmd, 'srun': SRunWrapperCmd}[experiment.cmd_type]
         cmd = SCmd(experiment=experiment, script_path=script_path)
@@ -243,14 +231,6 @@ class SlurmBackend(object):
         self._put(script.path, remote_script_path)
 
         return remote_script_path
-
-    def deploy_neptune_token(self, experiment):
-        return
-        #TODO(pm): remove me please
-        if experiment.local_neptune_token:
-            remote_token = SlurmNeptuneToken(experiment=experiment)
-            self._ensure_dir(remote_token.path.parent)
-            self._put(experiment.local_neptune_token.path, remote_token.path)
 
     @staticmethod
     def _put(local_path, remote_path, quiet=True):

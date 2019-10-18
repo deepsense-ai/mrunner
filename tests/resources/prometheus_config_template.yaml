@@ -6,7 +6,7 @@
      modules_to_load:
      - plgrid/tools/python/3.6.5
      partition: plgrid-testing
-     requirements_file: resources/requirements_remote.txt
+     requirements_file: resources/requirements.txt
      time: 59
      cpu: 2
      mem: 5G
@@ -20,7 +20,7 @@
      cmd_type: sbatch
      modules_to_load:
      partition: plgrid-testing
-     requirements_file: resources/requirements_remote.txt
+     requirements_file: resources/requirements.txt
      time: 59
      cpu: 2
      mem: 5G
@@ -37,7 +37,7 @@
      - plgrid/tools/openmpi/3.0.0-gcc-4.9.2
      partition: plgrid-testing
      ntasks: 2
-     requirements_file: resources/requirements_remote.txt
+     requirements_file: resources/requirements.txt
      time: 59
      cpu: 2
      mem: 5G

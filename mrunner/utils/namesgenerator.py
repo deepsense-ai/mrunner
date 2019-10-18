@@ -316,6 +316,9 @@ right = [
   
   # Mary Jackson, American mathematician and aerospace engineer who earned the highest title within NASA's engineering department - https://en.wikipedia.org/wiki/Mary_Jackson_(engineer)
   'jackson',
+
+  # Janusz Nosacz, Grupa zamieszkałych aktualnie na wyspie Borneo w Indonezji polskich imigrantów, którzy z niewiadomych przyczyn przybrali wygląd i rozum małpy, zachowując jedynie swój charakterystyczny „syndrom Polaka” - https://nonsensopedia.org/wiki/Nosacz_sundajski
+  'janusz',
   
   # Yeong-Sil Jang was a Korean scientist and astronomer during the Joseon Dynasty; he invented the first metal printing press and water gauge. https://en.wikipedia.org/wiki/Jang_Yeong-sil
   'jang',
