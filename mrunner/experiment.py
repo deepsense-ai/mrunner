@@ -86,7 +86,7 @@ def _load_py_experiment(script, spec, *, dump_dir):
 
         config_path = _create_and_dump_config(spec_params, dump_dir)
 
-        yield (config_path, spec_params)
+        yield config_path, spec_params
 
 
 def generate_experiments(script, context, *, spec='spec', dump_dir=None):
