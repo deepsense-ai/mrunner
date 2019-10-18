@@ -16,7 +16,7 @@ function prepare_local_venv {
     rm -rf $ENV_DIR
     python3 -m venv $ENV_DIR
     source $ENV_DIR/bin/activate
-    pip install -r resources/requirements_local.txt
+    pip install -r resources/requirements.txt
 }
 
 function prepare_mrunner_config {
