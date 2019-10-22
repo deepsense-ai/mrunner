@@ -19,22 +19,25 @@ from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_a
 
 LOGGER = logging.getLogger(__name__)
 RECOMMENDED_CPUS_NUMBER = 4
-DEFAULT_SCRATCH_SUBDIR = 'mrunner_scratch'
+DEFAULT_SCRATCH_DIR = 'mrunner_scratch'
+DEFAULT_CACHE_DIR = '.cache'
 SCRATCH_DIR_RANDOM_SUFIX_SIZE = 10
 
+def generate_scratch_dir(experiment):
+    return Path(experiment._slurm_scratch_dir) / DEFAULT_SCRATCH_DIR
+
+def generate_cache_dir(experiment):
+    return experiment.scratch_dir / DEFAULT_CACHE_DIR
+    
+def generate_project_scratch_dir(experiment):
+    return experiment.scratch_dir / experiment.project.split('/')[-1]
+
+def generate_grid_scratch_dir(experiment):
+    return experiment.project_scratch_dir / experiment.unique_name
 
 def generate_experiment_scratch_dir(experiment):
-    experiment_subdir = '{name}_{random_id}'.format(name=experiment.name,
-                                                    random_id=id_generator(SCRATCH_DIR_RANDOM_SUFIX_SIZE))
-    project_subdir = generate_project_scratch_dir(experiment)
-    return project_subdir / experiment_subdir
-
-
-def generate_project_scratch_dir(experiment):
-    project_subdir = '{project}'.format(project=experiment.project)
-    scratch_subdir = (experiment.scratch_subdir or DEFAULT_SCRATCH_SUBDIR)
-    return Path(experiment._slurm_scratch_dir) / scratch_subdir / project_subdir
-
+    #TODO(pj): Change id_generator to hyper-params shorthand
+    return experiment.grid_scratch_dir / id_generator(4)
 
 EXPERIMENT_MANDATORY_FIELDS = [
     ('_slurm_scratch_dir', dict())  # obtained from cluster $SCRATCH env
@@ -46,8 +49,10 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('partition', dict(default=PLGRID_TESTING_PARTITION)),
 
     # scratch directory related
-    ('scratch_subdir', dict(default='')),
+    ('scratch_dir', dict(default=attr.Factory(generate_scratch_dir, takes_self=True))),
+    ('cache_dir', dict(default=attr.Factory(generate_cache_dir, takes_self=True))),
     ('project_scratch_dir', dict(default=attr.Factory(generate_project_scratch_dir, takes_self=True))),
+    ('grid_scratch_dir', dict(default=attr.Factory(generate_grid_scratch_dir, takes_self=True))),
     ('experiment_scratch_dir', dict(default=attr.Factory(generate_experiment_scratch_dir, takes_self=True))),
 
     # run time related
@@ -113,12 +118,14 @@ class SlurmWrappersCmd(object):
             elif default:
                 cmd_items += [option, default]
 
-        default_log_path = self._experiment.experiment_scratch_dir / 'slurm.log' if self._cmd == 'sbatch' else None
+        default_log_path = \
+            self._experiment.experiment_scratch_dir /\
+            self._experiment.cmd._experiment_config_path.parent /\
+            'slurm.log' if self._cmd == 'sbatch' else None
         _extend_cmd_items(cmd_items, '-A', 'account')
         _extend_cmd_items(cmd_items, '-o', 'log_output_path', default_log_path)  # output
         _extend_cmd_items(cmd_items, '-p', 'partition')
         _extend_cmd_items(cmd_items, '-t', 'time')
-        # _extend_cmd_items(cmd_items, '-n', 'ntasks')
 
         cmd_items += self._resources_items()
         cmd_items += [self._script_path]
@@ -205,7 +212,8 @@ class SlurmBackend(object):
 
     def ensure_directories(self, experiment):
         self._ensure_dir(experiment.experiment_scratch_dir)
-        self._ensure_dir(experiment.storage_dir)
+        #TODO(pj): This should be run once for the whole grid of experiments
+        self._ensure_dir(experiment.cache_dir)
 
     def deploy_code(self, experiment):
         paths_to_dump = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)

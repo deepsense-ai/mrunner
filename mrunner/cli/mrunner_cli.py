@@ -116,9 +116,8 @@ def run(ctx, spec, requirements_file, base_image, script, params):
             experiment.update({'base_image': base_image, 'requirements': requirements})
 
             cmd = ' '.join([experiment.pop('script')] + list(params))
-
             experiment['cmd'] = WrapperCmd(cmd=cmd, experiment_config_path=config_path)
-
+            
             backend = {
                 'kubernetes': KubernetesBackend,
                 'slurm': SlurmBackend
