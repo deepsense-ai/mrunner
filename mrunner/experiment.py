@@ -32,7 +32,6 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
 ]
 
-# TODO(pj): Refactor me, create factory method and clean up __init__ (use attrs)
 @attr.s
 class Experiment(object):
 

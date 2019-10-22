@@ -124,16 +124,14 @@ def run(ctx, spec, requirements_file, base_image, script, params):
                 'slurm': SlurmBackend
             }[experiment['backend_type']]()
 
-            # TODO(pj): For DEBUG proposes run backend once not in try ... except
-            backend.run(experiment=experiment)
-            # num_of_reties = 5
-            # for i in range(num_of_reties):
-            #     try:
-            #         backend.run(experiment=experiment)
-            #         break
-            #     except Exception as e:
-            #         print(f"Caught exception: {e}. Retrying until {num_of_reties} times")
-            #     raise RuntimeError(f"Failed for {num_of_reties} times. Give up.")
+            num_of_reties = 5
+            for i in range(num_of_reties):
+                try:
+                    backend.run(experiment=experiment)
+                    break
+                except Exception as e:
+                    print(f"Caught exception: {e}. Retrying until {num_of_reties} times")
+                raise RuntimeError(f"Failed for {num_of_reties} times. Give up.")
 
     finally:
         if dump_dir:
