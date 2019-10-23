@@ -82,6 +82,7 @@ def _load_py_experiment(script, spec, *, dump_dir):
     experiments_list = get_experiments_list(script, spec)
     for experiment in experiments_list:
         spec_params = experiment.to_dict()
+        spec_params['name'] = re.sub(r'[ .,_-]+', '-', spec_params['name'].lower())
 
         config_path = _create_and_dump_config(spec_params, dump_dir)
 
@@ -92,9 +93,6 @@ def generate_experiments(script, context, *, spec='spec', dump_dir=None):
     experiments = _load_py_experiment(script, spec=spec, dump_dir=dump_dir)
 
     for config_path, spec_params in experiments:
-        spec_params['name'] = re.sub(r'[ .,_-]+', '-', spec_params['name'].lower())
-        spec_params['cwd'] = Path.getcwd()
-
         experiment = _merge_experiment_parameters(spec_params, context)
 
         yield config_path, experiment
