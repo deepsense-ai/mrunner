@@ -38,7 +38,7 @@ def generate_grid_scratch_dir(experiment):
 
 def generate_experiment_scratch_dir(experiment):
     #TODO(pj): Change id_generator to hyper-params shorthand
-    return experiment.grid_scratch_dir / id_generator(4)
+    return experiment.grid_scratch_dir / experiment.name + '_' + id_generator(4)
 
 EXPERIMENT_MANDATORY_FIELDS = [
     ('_slurm_scratch_dir', dict())  # obtained from cluster $SCRATCH env
