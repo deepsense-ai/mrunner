@@ -7,6 +7,7 @@ import tempfile
 import attr
 from fabric.api import run as fabric_run
 from fabric.context_managers import cd
+from fabric.contrib import files
 from fabric.contrib.project import rsync_project
 from fabric.state import env
 from paramiko.agent import Agent
@@ -197,17 +198,30 @@ class SlurmBackend(object):
         env['host_string'] = slurm_url
         env['--connection-attempts'] = "5"
         env['--timeout'] = "60"
+
+        # exclude config, it will be send separately via `send_config`
+        experiment['exclude'].append(experiment['cmd']._experiment_config_path)
+        
+        # create Slurm experiment
         slurm_scratch_dir = experiment['storage_dir']
         experiment = ExperimentRunOnSlurm(slurm_scratch_dir=slurm_scratch_dir, slurm_url=slurm_url,
                                           **filter_only_attr(ExperimentRunOnSlurm, experiment))
-        # assert experiment.venv is not None or experiment.singularity_container is not None, \
-        #     "Execution environment needs to be specified. venv or singularity_container"
+
+        # create experiment script
+        script = ExperimentScript(experiment)
+        remote_script_path = experiment.project_scratch_dir / script.script_name
+        archive_remote_path = experiment.cache_dir / experiment.unique_name
+        
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
-        script_path = self.deploy_code(experiment)
+        self.cache_code(experiment, archive_remote_path)
+        self.deploy_code(experiment, archive_remote_path)
+        self.send_config(experiment)
+        self.send_script(script, remote_script_path)
+        
         SCmd = {'sbatch': SBatchWrapperCmd, 'srun': SRunWrapperCmd}[experiment.cmd_type]
-        cmd = SCmd(experiment=experiment, script_path=script_path)
+        cmd = SCmd(experiment=experiment, script_path=remote_script_path)
         self._fabric_run(cmd.command)
 
     def ensure_directories(self, experiment):
@@ -215,7 +229,10 @@ class SlurmBackend(object):
         #TODO(pj): This should be run once for the whole grid of experiments
         self._ensure_dir(experiment.cache_dir)
 
-    def deploy_code(self, experiment):
+    def cache_code(self, experiment, archive_remote_path):
+        if files.exists(archive_remote_path):
+            return
+        
         paths_to_dump = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)
         with tempfile.NamedTemporaryFile(suffix='.tar.gz') as temp_file:
             # archive all files
@@ -223,24 +240,25 @@ class SlurmBackend(object):
                 for p in paths_to_dump:
                     LOGGER.debug('Adding "{}" to deployment archive'.format(p.rel_remote_path))
                     tar_file.add(p.local_path, arcname=p.rel_remote_path)
-
+                
             # upload archive to cluster and extract
-            self._put(temp_file.name, experiment.experiment_scratch_dir)
-            with cd(experiment.experiment_scratch_dir):
-                archive_remote_path = experiment.experiment_scratch_dir / Path(temp_file.name).name
-                self._fabric_run('tar xf {tar_filename} && rm {tar_filename}'.format(tar_filename=archive_remote_path))
+            self._put(temp_file.name, archive_remote_path)
+        
+    def deploy_code(self, experiment, archive_remote_path):
+        with cd(experiment.experiment_scratch_dir):
+            self._fabric_run('tar xf {tar_filename}'.format(tar_filename=archive_remote_path))
+    
+    def send_config(self, experiment):
+        self._put(experiment.cmd._experiment_config_path, experiment.experiment_scratch_dir, relative=True)
 
-        # create and upload experiment script
-        script = ExperimentScript(experiment)
-        remote_script_path = experiment.project_scratch_dir / script.script_name
+    def send_script(self, script, remote_script_path):
         self._put(script.path, remote_script_path)
 
-        return remote_script_path
-
     @staticmethod
-    def _put(local_path, remote_path, quiet=True):
-        quiet_kwargs = {'ssh_opts': '-q', 'extra_opts': '-q'} if quiet else {}
-        rsync_project(remote_path, local_path, **quiet_kwargs)
+    def _put(local_path, remote_path, quiet=True, relative=False):
+        extra_opts = '{} {}'.format('-q' if quiet else '', '--relative' if relative else '')
+        ssh_opts = '-q' if quiet else ''
+        rsync_project(remote_path, local_path, ssh_opts=ssh_opts, extra_opts=extra_opts)
 
     @staticmethod
     def _ensure_dir(directory_path):
