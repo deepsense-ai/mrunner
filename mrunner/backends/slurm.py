@@ -75,10 +75,7 @@ class ExperimentScript(GeneratedTemplateFile):
     DEFAULT_SLURM_EXPERIMENT_SCRIPT_TEMPLATE = 'slurm_experiment.sh.jinja2'
 
     def __init__(self, experiment):
-        # merge env vars
-        env = experiment.cmd.env.copy() if experiment.cmd else {}
-        env.update(experiment.env)
-        env = {k: str(v) for k, v in env.items()}
+        env = {k: str(v) for k, v in experiment.env.items()}
 
         experiment = attr.evolve(experiment, env=env, experiment_scratch_dir=experiment.experiment_scratch_dir)
 

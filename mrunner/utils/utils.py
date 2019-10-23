@@ -63,7 +63,6 @@ class WrapperCmd(object):
 
     _cmd = attr.ib()
     _experiment_config_path = attr.ib()
-    env = attr.ib(factory=dict)
 
     @property
     def command(self):

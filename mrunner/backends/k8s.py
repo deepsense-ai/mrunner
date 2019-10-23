@@ -59,9 +59,7 @@ class Job(client.V1Job):
         experiment_name = re.sub(r'[ ,.\-_:;]+', '-', experiment.name)
         name = '{}-{}'.format(experiment_name, get_random_name('-'))
 
-        envs = experiment.env.copy()
-        envs.update(experiment.cmd.env if experiment.cmd else {})
-        envs = {k: str(v) for k, v in envs.items()}
+        envs = {k: str(v) for k, v in experiment.env.items()}
 
         resources = dict([self._map_resources(name, qty) for name, qty in experiment.resources.items()])
 
