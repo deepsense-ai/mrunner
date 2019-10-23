@@ -266,3 +266,10 @@ class KubernetesBackend(object):
             except OSError:
                 raise RuntimeError('Missing {} cmd. Please install and setup it first: {}'.format(cmd, link))
         return result
+
+_kubernetes_backend = None
+def get_kubernetes_backend():
+    global _kubernetes_backend
+    if _kubernetes_backend is None:
+        _kubernetes_backend = KubernetesBackend()
+    return _kubernetes_backend

@@ -10,14 +10,21 @@ import logging
 import click
 from path import Path
 
-from mrunner.backends.k8s import KubernetesBackend
-from mrunner.backends.slurm import SlurmBackend
+from mrunner.backends.k8s import get_kubernetes_backend
+from mrunner.backends.slurm import get_slurm_backend
 from mrunner.cli.config import ConfigParser, context as context_cli
 from mrunner.experiment import generate_experiments
 from mrunner.utils.utils import WrapperCmd
 from pprint import pformat
 LOGGER = logging.getLogger(__name__)
 
+def get_backend(backend_type):
+    if backend_type == 'kubernetes':
+        return get_kubernetes_backend()
+    if backend_type == 'slurm':
+        return get_slurm_backend()
+    else:
+        raise KeyError('No backend type: {}'.format(backend_type))
 
 def get_default_config_path(ctx):
     default_config_file_name = 'config.yaml'
@@ -118,15 +125,10 @@ def run(ctx, spec, requirements_file, base_image, script, params):
             cmd = ' '.join([experiment.pop('script')] + list(params))
             experiment['cmd'] = WrapperCmd(cmd=cmd, experiment_config_path=config_path)
             
-            backend = {
-                'kubernetes': KubernetesBackend,
-                'slurm': SlurmBackend
-            }[experiment['backend_type']]()
-
             num_of_reties = 5
             for i in range(num_of_reties):
                 try:
-                    backend.run(experiment=experiment)
+                    get_backend(experiment['backend_type']).run(experiment=experiment)
                     break
                 except Exception as e:
                     print(f"Caught exception: {e}. Retrying until {num_of_reties} times")

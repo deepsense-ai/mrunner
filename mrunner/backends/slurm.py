@@ -188,7 +188,10 @@ class SRunWrapperCmd(SlurmWrappersCmd):
         super(SRunWrapperCmd, self).__init__(experiment, script_path, **kwargs)
         self._cmd = 'srun'
 
+@attr.s
 class SlurmBackend(object):
+
+    initialized = attr.ib(default=False, init=False)
 
     def run(self, experiment):
         assert Agent().get_keys(), "Add your private key to ssh agent using 'ssh-add' command"
@@ -226,8 +229,9 @@ class SlurmBackend(object):
 
     def ensure_directories(self, experiment):
         self._ensure_dir(experiment.experiment_scratch_dir)
-        #TODO(pj): This should be run once for the whole grid of experiments
-        self._ensure_dir(experiment.cache_dir)
+        if not self.initialized:
+            self._ensure_dir(experiment.cache_dir)
+            self.initialized = True
 
     def cache_code(self, experiment, archive_remote_path):
         if files.exists(archive_remote_path):
@@ -267,3 +271,10 @@ class SlurmBackend(object):
     @staticmethod
     def _fabric_run(cmd):
         return fabric_run(cmd)
+
+_slurm_backend = None
+def get_slurm_backend():
+    global _slurm_backend
+    if _slurm_backend is None:
+        _slurm_backend = SlurmBackend()
+    return _slurm_backend
