@@ -9,7 +9,7 @@ import six
 from path import Path
 import cloudpickle
 
-from mrunner.utils.namesgenerator import id_generator, get_random_name
+from mrunner.utils.namesgenerator import id_generator, get_random_name, get_unique_name
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,6 +22,8 @@ COMMON_EXPERIMENT_MANDATORY_FIELDS = [
 
 COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('project', dict(default='sandbox')),
+    ('random_name', dict(factory=get_random_name)),
+    ('unique_name', dict(default=attr.Factory(get_unique_name, takes_self=True))),
     ('requirements', dict(default=attr.Factory(list), type=list)),
     ('exclude', dict(default=None, type=list)),
     ('paths_to_copy', dict(default=attr.Factory(list), type=list)),
@@ -32,7 +34,6 @@ COMMON_EXPERIMENT_OPTIONAL_FIELDS = [
     ('cwd', dict(default=attr.Factory(Path.getcwd))),
 ]
 
-# TODO(pj): Refactor me, create factory method and clean up __init__ (use attrs)
 @attr.s
 class Experiment(object):
 
@@ -45,6 +46,7 @@ class Experiment(object):
     tags = attr.ib(factory=list)
     exclude = attr.ib(factory=list)
     random_name = attr.ib(factory=get_random_name)
+    unique_name = attr.ib(default=attr.Factory(get_unique_name, takes_self=True))
     git_info = attr.ib(default=None)
 
     def to_dict(self):
@@ -74,7 +76,7 @@ def _load_py_experiment(script, spec, *, dump_dir):
     LOGGER.info('Found {} function in {}; will use it as experiments configuration generator'.format(spec, script))
 
     def _create_and_dump_config(spec_params, dump_dir):
-        config_path = dump_dir / 'config-{}-{}.pkl'.format(spec_params['random_name'], id_generator(4))
+        config_path = dump_dir / 'config.pkl'
         with open(config_path, "wb") as file:
             cloudpickle.dump(spec_params, file)
             
@@ -83,6 +85,7 @@ def _load_py_experiment(script, spec, *, dump_dir):
     experiments_list = get_experiments_list(script, spec)
     for experiment in experiments_list:
         spec_params = experiment.to_dict()
+        spec_params['name'] = re.sub(r'[ .,_-]+', '-', spec_params['name'].lower())
 
         config_path = _create_and_dump_config(spec_params, dump_dir)
 
@@ -93,11 +96,7 @@ def generate_experiments(script, context, *, spec='spec', dump_dir=None):
     experiments = _load_py_experiment(script, spec=spec, dump_dir=dump_dir)
 
     for config_path, spec_params in experiments:
-        spec_params['name'] = re.sub(r'[ .,_-]+', '-', spec_params['name'].lower())
-        spec_params['cwd'] = Path.getcwd()
-
         experiment = _merge_experiment_parameters(spec_params, context)
-
         yield config_path, experiment
 
 

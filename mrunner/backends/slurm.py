@@ -7,6 +7,7 @@ import tempfile
 import attr
 from fabric.api import run as fabric_run
 from fabric.context_managers import cd
+from fabric.contrib import files
 from fabric.contrib.project import rsync_project
 from fabric.state import env
 from paramiko.agent import Agent
@@ -19,22 +20,25 @@ from mrunner.utils.utils import GeneratedTemplateFile, get_paths_to_copy, make_a
 
 LOGGER = logging.getLogger(__name__)
 RECOMMENDED_CPUS_NUMBER = 4
-DEFAULT_SCRATCH_SUBDIR = 'mrunner_scratch'
+DEFAULT_SCRATCH_DIR = 'mrunner_scratch'
+DEFAULT_CACHE_DIR = '.cache'
 SCRATCH_DIR_RANDOM_SUFIX_SIZE = 10
 
+def generate_scratch_dir(experiment):
+    return Path(experiment._slurm_scratch_dir) / DEFAULT_SCRATCH_DIR
+
+def generate_cache_dir(experiment):
+    return experiment.scratch_dir / DEFAULT_CACHE_DIR
+    
+def generate_project_scratch_dir(experiment):
+    return experiment.scratch_dir / experiment.project.split('/')[-1]
+
+def generate_grid_scratch_dir(experiment):
+    return experiment.project_scratch_dir / experiment.unique_name
 
 def generate_experiment_scratch_dir(experiment):
-    experiment_subdir = '{name}_{random_id}'.format(name=experiment.name,
-                                                    random_id=id_generator(SCRATCH_DIR_RANDOM_SUFIX_SIZE))
-    project_subdir = generate_project_scratch_dir(experiment)
-    return project_subdir / experiment_subdir
-
-
-def generate_project_scratch_dir(experiment):
-    project_subdir = '{project}'.format(project=experiment.project)
-    scratch_subdir = (experiment.scratch_subdir or DEFAULT_SCRATCH_SUBDIR)
-    return Path(experiment._slurm_scratch_dir) / scratch_subdir / project_subdir
-
+    #TODO(pj): Change id_generator to hyper-params shorthand
+    return experiment.grid_scratch_dir / experiment.name + '_' + id_generator(4)
 
 EXPERIMENT_MANDATORY_FIELDS = [
     ('_slurm_scratch_dir', dict())  # obtained from cluster $SCRATCH env
@@ -46,8 +50,10 @@ EXPERIMENT_OPTIONAL_FIELDS = [
     ('partition', dict(default=PLGRID_TESTING_PARTITION)),
 
     # scratch directory related
-    ('scratch_subdir', dict(default='')),
+    ('scratch_dir', dict(default=attr.Factory(generate_scratch_dir, takes_self=True))),
+    ('cache_dir', dict(default=attr.Factory(generate_cache_dir, takes_self=True))),
     ('project_scratch_dir', dict(default=attr.Factory(generate_project_scratch_dir, takes_self=True))),
+    ('grid_scratch_dir', dict(default=attr.Factory(generate_grid_scratch_dir, takes_self=True))),
     ('experiment_scratch_dir', dict(default=attr.Factory(generate_experiment_scratch_dir, takes_self=True))),
 
     # run time related
@@ -75,10 +81,7 @@ class ExperimentScript(GeneratedTemplateFile):
     DEFAULT_SLURM_EXPERIMENT_SCRIPT_TEMPLATE = 'slurm_experiment.sh.jinja2'
 
     def __init__(self, experiment):
-        # merge env vars
-        env = experiment.cmd.env.copy() if experiment.cmd else {}
-        env.update(experiment.env)
-        env = {k: str(v) for k, v in env.items()}
+        env = {k: str(v) for k, v in experiment.env.items()}
 
         experiment = attr.evolve(experiment, env=env, experiment_scratch_dir=experiment.experiment_scratch_dir)
 
@@ -116,12 +119,14 @@ class SlurmWrappersCmd(object):
             elif default:
                 cmd_items += [option, default]
 
-        default_log_path = self._experiment.experiment_scratch_dir / 'slurm.log' if self._cmd == 'sbatch' else None
+        default_log_path = \
+            self._experiment.experiment_scratch_dir /\
+            self._experiment.cmd._experiment_config_path.parent /\
+            'slurm.log' if self._cmd == 'sbatch' else None
         _extend_cmd_items(cmd_items, '-A', 'account')
         _extend_cmd_items(cmd_items, '-o', 'log_output_path', default_log_path)  # output
         _extend_cmd_items(cmd_items, '-p', 'partition')
         _extend_cmd_items(cmd_items, '-t', 'time')
-        # _extend_cmd_items(cmd_items, '-n', 'ntasks')
 
         cmd_items += self._resources_items()
         cmd_items += [self._script_path]
@@ -183,7 +188,10 @@ class SRunWrapperCmd(SlurmWrappersCmd):
         super(SRunWrapperCmd, self).__init__(experiment, script_path, **kwargs)
         self._cmd = 'srun'
 
+@attr.s
 class SlurmBackend(object):
+
+    initialized = attr.ib(default=False, init=False)
 
     def run(self, experiment):
         assert Agent().get_keys(), "Add your private key to ssh agent using 'ssh-add' command"
@@ -193,24 +201,42 @@ class SlurmBackend(object):
         env['host_string'] = slurm_url
         env['--connection-attempts'] = "5"
         env['--timeout'] = "60"
+
+        # exclude config, it will be send separately via `send_config`
+        experiment['exclude'].append(experiment['cmd']._experiment_config_path)
+        
+        # create Slurm experiment
         slurm_scratch_dir = experiment['storage_dir']
         experiment = ExperimentRunOnSlurm(slurm_scratch_dir=slurm_scratch_dir, slurm_url=slurm_url,
                                           **filter_only_attr(ExperimentRunOnSlurm, experiment))
-        # assert experiment.venv is not None or experiment.singularity_container is not None, \
-        #     "Execution environment needs to be specified. venv or singularity_container"
+
+        # create experiment script
+        script = ExperimentScript(experiment)
+        remote_script_path = experiment.project_scratch_dir / script.script_name
+        archive_remote_path = experiment.cache_dir / experiment.unique_name
+        
         LOGGER.debug('Configuration: {}'.format(experiment))
 
         self.ensure_directories(experiment)
-        script_path = self.deploy_code(experiment)
+        self.cache_code(experiment, archive_remote_path)
+        self.deploy_code(experiment, archive_remote_path)
+        self.send_config(experiment)
+        self.send_script(script, remote_script_path)
+        
         SCmd = {'sbatch': SBatchWrapperCmd, 'srun': SRunWrapperCmd}[experiment.cmd_type]
-        cmd = SCmd(experiment=experiment, script_path=script_path)
+        cmd = SCmd(experiment=experiment, script_path=remote_script_path)
         self._fabric_run(cmd.command)
 
     def ensure_directories(self, experiment):
         self._ensure_dir(experiment.experiment_scratch_dir)
-        self._ensure_dir(experiment.storage_dir)
+        if not self.initialized:
+            self._ensure_dir(experiment.cache_dir)
+            self.initialized = True
 
-    def deploy_code(self, experiment):
+    def cache_code(self, experiment, archive_remote_path):
+        if files.exists(archive_remote_path):
+            return
+        
         paths_to_dump = get_paths_to_copy(exclude=experiment.exclude, paths_to_copy=experiment.paths_to_copy)
         with tempfile.NamedTemporaryFile(suffix='.tar.gz') as temp_file:
             # archive all files
@@ -218,24 +244,25 @@ class SlurmBackend(object):
                 for p in paths_to_dump:
                     LOGGER.debug('Adding "{}" to deployment archive'.format(p.rel_remote_path))
                     tar_file.add(p.local_path, arcname=p.rel_remote_path)
-
+                
             # upload archive to cluster and extract
-            self._put(temp_file.name, experiment.experiment_scratch_dir)
-            with cd(experiment.experiment_scratch_dir):
-                archive_remote_path = experiment.experiment_scratch_dir / Path(temp_file.name).name
-                self._fabric_run('tar xf {tar_filename} && rm {tar_filename}'.format(tar_filename=archive_remote_path))
+            self._put(temp_file.name, archive_remote_path)
+        
+    def deploy_code(self, experiment, archive_remote_path):
+        with cd(experiment.experiment_scratch_dir):
+            self._fabric_run('tar xf {tar_filename}'.format(tar_filename=archive_remote_path))
+    
+    def send_config(self, experiment):
+        self._put(experiment.cmd._experiment_config_path, experiment.experiment_scratch_dir, relative=True)
 
-        # create and upload experiment script
-        script = ExperimentScript(experiment)
-        remote_script_path = experiment.project_scratch_dir / script.script_name
+    def send_script(self, script, remote_script_path):
         self._put(script.path, remote_script_path)
 
-        return remote_script_path
-
     @staticmethod
-    def _put(local_path, remote_path, quiet=True):
-        quiet_kwargs = {'ssh_opts': '-q', 'extra_opts': '-q'} if quiet else {}
-        rsync_project(remote_path, local_path, **quiet_kwargs)
+    def _put(local_path, remote_path, quiet=True, relative=False):
+        extra_opts = '{} {}'.format('-q' if quiet else '', '--relative' if relative else '')
+        ssh_opts = '-q' if quiet else ''
+        rsync_project(remote_path, local_path, ssh_opts=ssh_opts, extra_opts=extra_opts)
 
     @staticmethod
     def _ensure_dir(directory_path):
@@ -244,3 +271,10 @@ class SlurmBackend(object):
     @staticmethod
     def _fabric_run(cmd):
         return fabric_run(cmd)
+
+_slurm_backend = None
+def get_slurm_backend():
+    global _slurm_backend
+    if _slurm_backend is None:
+        _slurm_backend = SlurmBackend()
+    return _slurm_backend

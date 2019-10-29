@@ -59,9 +59,7 @@ class Job(client.V1Job):
         experiment_name = re.sub(r'[ ,.\-_:;]+', '-', experiment.name)
         name = '{}-{}'.format(experiment_name, get_random_name('-'))
 
-        envs = experiment.env.copy()
-        envs.update(experiment.cmd.env if experiment.cmd else {})
-        envs = {k: str(v) for k, v in envs.items()}
+        envs = {k: str(v) for k, v in experiment.env.items()}
 
         resources = dict([self._map_resources(name, qty) for name, qty in experiment.resources.items()])
 
@@ -268,3 +266,10 @@ class KubernetesBackend(object):
             except OSError:
                 raise RuntimeError('Missing {} cmd. Please install and setup it first: {}'.format(cmd, link))
         return result
+
+_kubernetes_backend = None
+def get_kubernetes_backend():
+    global _kubernetes_backend
+    if _kubernetes_backend is None:
+        _kubernetes_backend = KubernetesBackend()
+    return _kubernetes_backend

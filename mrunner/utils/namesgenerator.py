@@ -7,6 +7,7 @@
 
 import random
 import string
+from datetime import datetime
 
 left = [
   'admiring',
@@ -603,6 +604,14 @@ def get_random_name(sep='_'):
 
 def id_generator(n=10):
     return ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(n))
+
+
+def get_unique_name(experiment):
+    try:
+        name = experiment.random_name
+    except:
+        name = id_generator(4)
+    return datetime.now().strftime('%d_%m-%H_%M') + '-' + name
 
 
 if __name__ == '__main__':

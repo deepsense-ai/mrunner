@@ -1,4 +1,3 @@
-import datetime
 import logging
 from collections import namedtuple, OrderedDict
 from tempfile import NamedTemporaryFile
@@ -8,13 +7,8 @@ import six
 from jinja2 import Environment, PackageLoader, StrictUndefined
 from path import Path
 
-from mrunner.utils.namesgenerator import id_generator
 
 LOGGER = logging.getLogger(__name__)
-
-
-def get_experiment_dirname():
-    return datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '_' + id_generator(4)
 
 
 def parse_argv(parser, argv):
@@ -63,7 +57,6 @@ class WrapperCmd(object):
 
     _cmd = attr.ib()
     _experiment_config_path = attr.ib()
-    env = attr.ib(factory=dict)
 
     @property
     def command(self):
